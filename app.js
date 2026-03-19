@@ -418,8 +418,6 @@ const renderGrid = (filterText = '') => {
     visibleItems.forEach(item => {
         const card = document.createElement('div');
         card.className = 'bg-white rounded-xl border border-gray-200 p-5 cursor-pointer flex flex-col justify-between hover:border-blue-500 hover:shadow-md transition-all shadow-sm';
-        const latest = item.history[item.history.length - 1];
-        const price = latest ? latest.price : 0;
 
         const variantCount = Object.keys(item.variants).length;
         const sub = item.category === 'equip' ? `${variantCount}개 옵션` : `${variantCount}등급`;
@@ -431,9 +429,6 @@ const renderGrid = (filterText = '') => {
                     <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 font-medium">${sub}</span>
                 </div>
                 <h3 class="text-lg font-bold text-gray-900">${item.name}</h3>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-100">
-               <div class="text-red-500 font-bold text-xl">${price.toLocaleString()}억</div>
             </div>
         `;
         card.onclick = () => openModal(item);
@@ -675,7 +670,7 @@ const updateChart = () => {
                     borderWidth: 2,
                     pointRadius: 0,
                     pointHoverRadius: 5,
-                    tension: 0.1,
+                    tension: 0.3,
                     fill: false,
                     spanGaps: false
                 }]
