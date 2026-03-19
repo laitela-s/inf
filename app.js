@@ -675,7 +675,7 @@ const updateChart = () => {
                     borderWidth: 2,
                     pointRadius: 0,
                     pointHoverRadius: 5,
-                    tension: 0.3,
+                    tension: 0.1,
                     fill: false,
                     spanGaps: false
                 }]
