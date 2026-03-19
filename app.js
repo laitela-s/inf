@@ -13,8 +13,8 @@ window.onerror = function (msg, url, line, col, error) {
 };
 
 // --- APP STATE ---
-let GLOBAL_DATA = [];
-let PROCESSED_DATA = [];
+let RAW_LINES = [];
+let ITEM_INDEX = {};
 let currentCategory = 'equip';
 let currentChartRange = 'all';
 let currentYScale = 'zoom';
@@ -77,24 +77,24 @@ const init = () => {
 };
 
 const loadData = () => {
-    // data.txt (plain text) 우선 시도, 실패시 window.FARM_DATA (data.js) 폴백
-    fetch('data.txt')
+    // data.txt 우선 시도, 실패시 window.FARM_DATA (data.js) 폴백
+    fetch('data.txt?t=' + Date.now(), { cache: 'no-store' })
         .then(res => {
             if (!res.ok) throw new Error('data.txt not found');
             return res.text();
         })
         .then(text => {
-            const rawData = text.split('\n')
+            RAW_LINES = text.split('\n')
                 .map(line => line.trim())
                 .filter(line => line.length > 0 && line.startsWith('('));
-            PROCESSED_DATA = processRealData(rawData);
+            ITEM_INDEX = buildQuickIndex(RAW_LINES);
             renderFilters();
             renderGrid();
         })
         .catch(() => {
-            // fetch 실패 시 (file:// 프로토콜 등) data.js 폴백
             if (typeof window.FARM_DATA !== 'undefined') {
-                PROCESSED_DATA = processRealData(window.FARM_DATA);
+                RAW_LINES = Array.isArray(window.FARM_DATA) ? window.FARM_DATA : [];
+                ITEM_INDEX = buildQuickIndex(RAW_LINES);
                 renderFilters();
                 renderGrid();
             } else {
@@ -125,31 +125,58 @@ const filterPriceOutliers = (history, multiplier = 3.0) => {
     return history.filter(h => h.price <= 0 || (h.price >= lowerBound && h.price <= upperBound));
 };
 
-const processRealData = (data) => {
-    const list = [];
-    const tree = {};
+// --- QUICK INDEX: 빠른 1차 파싱 (아이템 이름 + 카테고리만 추출) ---
+const buildQuickIndex = (lines) => {
+    const index = {};
+    for (let i = 0; i < lines.length; i++) {
+        const clean = lines[i].replace(/^\(|\)$/g, '');
+        const parts = clean.split(',');
+        if (parts.length < 4) continue;
+        const rawCat = parts[2].trim();
+        const cat = mapCategory(rawCat);
+        if (!cat) continue;
 
-    data.forEach(line => {
-        const entry = parseRawLine(line);
-        if (!entry) return;
-        const cat = mapCategory(entry.category);
-        if (!cat) return;
-        const mainName = entry.item_name || "알 수 없음";
+        let itemName;
+        if (rawCat === '장비' || rawCat === '장비셋') {
+            if (parts.length < 8) continue;
+            itemName = parts[3].trim();
+        } else if (rawCat === '악세') {
+            if (parts.length < 7) continue;
+            itemName = parts[5].trim();
+        } else if (rawCat === '재료') {
+            if (parts.length < 6) continue;
+            itemName = parts[3].trim();
+        } else continue;
 
-        if (!tree[cat]) tree[cat] = {};
-        if (!tree[cat][mainName]) {
-            tree[cat][mainName] = {
-                id: `${cat}_${mainName}`,
-                category: cat,
-                name: mainName,
-                variants: {},
-                history: []
-            };
+        if (!index[cat]) index[cat] = {};
+        if (!index[cat][itemName]) {
+            index[cat][itemName] = { count: 0, lineIndices: [] };
         }
+        index[cat][itemName].count++;
+        index[cat][itemName].lineIndices.push(i);
+    }
+    return index;
+};
 
-        const itemNode = tree[cat][mainName];
+// --- ON-DEMAND PROCESSING: 클릭 시 해당 아이템만 상세 처리 ---
+const processItemOnDemand = (cat, itemName) => {
+    const info = ITEM_INDEX[cat]?.[itemName];
+    if (!info) return null;
+
+    const item = {
+        id: `${cat}_${itemName}`,
+        category: cat,
+        name: itemName,
+        variants: {},
+        history: []
+    };
+
+    for (const idx of info.lineIndices) {
+        const entry = parseRawLine(RAW_LINES[idx]);
+        if (!entry) continue;
+
         const price = parseFloat(entry.price) || 0;
-        if (price <= 0) return;
+        if (price <= 0) continue;
 
         const dateParts = entry.date.split('.');
         const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
@@ -160,15 +187,15 @@ const processRealData = (data) => {
             meta: entry
         };
 
-        itemNode.history.push(historyItem);
+        item.history.push(historyItem);
 
         let variantKey = "Default";
         if (cat === 'equip') variantKey = entry.option || "노옵션";
         else if (cat === 'acc') variantKey = entry.grade || "일반";
         else if (cat === 'mat') variantKey = entry.grade || "일반";
 
-        if (!itemNode.variants[variantKey]) {
-            itemNode.variants[variantKey] = {
+        if (!item.variants[variantKey]) {
+            item.variants[variantKey] = {
                 name: variantKey,
                 matrix: {},
                 history: [],
@@ -176,7 +203,7 @@ const processRealData = (data) => {
             };
         }
 
-        const variantNode = itemNode.variants[variantKey];
+        const variantNode = item.variants[variantKey];
         variantNode.history.push(historyItem);
         variantNode.count++;
 
@@ -191,66 +218,59 @@ const processRealData = (data) => {
             variantNode.matrix[key].price = price;
             variantNode.matrix[key].count++;
         }
-    });
+    }
 
-    Object.keys(tree).forEach(cat => {
-        Object.values(tree[cat]).forEach(item => {
-            // Apply Outlier Filter
-            item.history = filterPriceOutliers(item.history);
-            item.history.sort((a, b) => a.isoDate - b.isoDate);
-            
-            const validVariants = {};
-            let hasValidVariant = false;
+    // Apply outlier filtering and thresholds
+    item.history = filterPriceOutliers(item.history);
+    item.history.sort((a, b) => a.isoDate - b.isoDate);
 
-            Object.entries(item.variants).forEach(([vKey, v]) => {
-                if (cat === 'equip') {
-                    const validMatrix = {};
-                    let matrixValidCount = 0;
-                    
-                    Object.entries(v.matrix).forEach(([mKey, m]) => {
-                        m.history = filterPriceOutliers(m.history);
-                        // 이상치 제거 후 개수 다시 평가
-                        m.count = m.history.length;
-                        
-                        if (m.count >= 3) {
-                            m.history.sort((a, b) => a.isoDate - b.isoDate);
-                            // Update display price to latest valid price
-                            if (m.history.length > 0) {
-                                m.price = m.history[m.history.length - 1].price;
-                            }
-                            validMatrix[mKey] = m;
-                            matrixValidCount++;
-                        }
-                    });
-                    
-                    if (matrixValidCount > 0) {
-                        v.matrix = validMatrix;
-                        v.history = filterPriceOutliers(v.history);
-                        v.count = v.history.length;
-                        v.history.sort((a, b) => a.isoDate - b.isoDate);
-                        validVariants[vKey] = v;
-                        hasValidVariant = true;
+    const validVariants = {};
+    let hasValidVariant = false;
+
+    Object.entries(item.variants).forEach(([vKey, v]) => {
+        if (cat === 'equip') {
+            const validMatrix = {};
+            let matrixValidCount = 0;
+
+            Object.entries(v.matrix).forEach(([mKey, m]) => {
+                m.history = filterPriceOutliers(m.history);
+                m.count = m.history.length;
+
+                if (m.count >= 5) {
+                    m.history.sort((a, b) => a.isoDate - b.isoDate);
+                    if (m.history.length > 0) {
+                        m.price = m.history[m.history.length - 1].price;
                     }
-
-                } else {
-                    v.history = filterPriceOutliers(v.history);
-                    v.count = v.history.length;
-                    
-                    if (v.count >= 3) {
-                        v.history.sort((a, b) => a.isoDate - b.isoDate);
-                        validVariants[vKey] = v;
-                        hasValidVariant = true;
-                    }
+                    validMatrix[mKey] = m;
+                    matrixValidCount++;
                 }
             });
 
-            if (hasValidVariant) {
-                item.variants = validVariants;
-                list.push(item);
+            if (matrixValidCount > 0) {
+                v.matrix = validMatrix;
+                v.history = filterPriceOutliers(v.history);
+                v.count = v.history.length;
+                v.history.sort((a, b) => a.isoDate - b.isoDate);
+                validVariants[vKey] = v;
+                hasValidVariant = true;
             }
-        });
+        } else {
+            v.history = filterPriceOutliers(v.history);
+            v.count = v.history.length;
+
+            if (v.count >= 5) {
+                v.history.sort((a, b) => a.isoDate - b.isoDate);
+                validVariants[vKey] = v;
+                hasValidVariant = true;
+            }
+        }
     });
-    return list;
+
+    if (hasValidVariant) {
+        item.variants = validVariants;
+        return item;
+    }
+    return null;
 };
 
 const parseRawLine = (line) => {
@@ -398,48 +418,54 @@ const renderGrid = (filterText = '') => {
     const grid = elements.grid;
     if (!grid) return;
 
-    // 1. Filter Data
-    let items = PROCESSED_DATA.filter(item => item.category === currentCategory);
-    if (filterText) items = items.filter(item => item.name.includes(filterText));
+    // ITEM_INDEX 기반 렌더링 (무거운 처리 없이 이름만 표시)
+    const catIndex = ITEM_INDEX[currentCategory] || {};
+    let items = Object.entries(catIndex).map(([name, info]) => ({
+        name,
+        count: info.count,
+        category: currentCategory
+    }));
 
-    // SORTER: Sort by Count Falling
-    items.sort((a, b) => b.history.length - a.history.length);
+    if (filterText) items = items.filter(item => item.name.includes(filterText));
+    items.sort((a, b) => b.count - a.count);
 
     if (items.length === 0) {
         grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10">데이터가 없습니다.</div>`;
         return;
     }
 
-    // 2. Setup Infinite Scroll (Clear and init)
     grid.innerHTML = '';
-
     const visibleItems = items.slice(0, visibleLimit);
 
     visibleItems.forEach(item => {
         const card = document.createElement('div');
         card.className = 'bg-white rounded-xl border border-gray-200 p-5 cursor-pointer flex flex-col justify-between hover:border-blue-500 hover:shadow-md transition-all shadow-sm';
 
-        const variantCount = Object.keys(item.variants).length;
-        const sub = item.category === 'equip' ? `${variantCount}개 옵션` : `${variantCount}등급`;
-
-        // REMOVED COUNT DISPLAY (Strict request)
         card.innerHTML = `
             <div>
                 <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 font-medium">${sub}</span>
+                    <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 font-medium">${item.count}건</span>
                 </div>
                 <h3 class="text-lg font-bold text-gray-900">${item.name}</h3>
             </div>
         `;
-        card.onclick = () => openModal(item);
+        card.onclick = () => {
+            // 클릭 시에만 해당 아이템의 상세 데이터를 처리
+            const processed = processItemOnDemand(item.category, item.name);
+            if (processed) {
+                openModal(processed);
+            } else {
+                alert("유효한 데이터가 부족합니다 (5건 미만).");
+            }
+        };
         grid.appendChild(card);
     });
 
-    // 3. Add Sentinel for Infinite Scroll
+    // Infinite Scroll Sentinel
     if (visibleItems.length < items.length) {
         const sentinel = document.createElement('div');
         sentinel.className = "col-span-full h-10 flex justify-center items-center py-4";
-        sentinel.innerHTML = `<div class="text-gray-500 text-xs">데이터 로딩 중...</div>`;
+        sentinel.innerHTML = `<div class="text-gray-500 text-xs">더 보기...</div>`;
         grid.appendChild(sentinel);
 
         if (observer) observer.disconnect();
@@ -742,4 +768,3 @@ const updateChart = () => {
 };
 
 document.addEventListener('DOMContentLoaded', init);
-
