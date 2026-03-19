@@ -125,7 +125,7 @@ const filterPriceOutliers = (history, multiplier = 3.0) => {
     return history.filter(h => h.price <= 0 || (h.price >= lowerBound && h.price <= upperBound));
 };
 
-// --- QUICK INDEX: 빠른 1차 파싱 (아이템 이름 + 카테고리만 추출) ---
+// --- QUICK INDEX: 빠른 1차 파싱 (아이템 이름 + 세부 셀 카운트까지 추출) ---
 const buildQuickIndex = (lines) => {
     const index = {};
     for (let i = 0; i < lines.length; i++) {
@@ -136,25 +136,44 @@ const buildQuickIndex = (lines) => {
         const cat = mapCategory(rawCat);
         if (!cat) continue;
 
-        let itemName;
+        let itemName, cellKey;
         if (rawCat === '장비' || rawCat === '장비셋') {
             if (parts.length < 8) continue;
             itemName = parts[3].trim();
+            const option = parts[4].trim();
+            const enc = Math.round(Number(parts[5].trim()));
+            const dur = Math.round(Number(parts[6].trim()));
+            cellKey = `${option}__${enc}_${dur}`;
         } else if (rawCat === '악세') {
             if (parts.length < 7) continue;
             itemName = parts[5].trim();
+            cellKey = parts[4].trim();
         } else if (rawCat === '재료') {
             if (parts.length < 6) continue;
             itemName = parts[3].trim();
+            cellKey = parts[4].trim();
         } else continue;
 
         if (!index[cat]) index[cat] = {};
         if (!index[cat][itemName]) {
-            index[cat][itemName] = { count: 0, lineIndices: [] };
+            index[cat][itemName] = { count: 0, lineIndices: [], cellCounts: {} };
         }
-        index[cat][itemName].count++;
-        index[cat][itemName].lineIndices.push(i);
+        const entry = index[cat][itemName];
+        entry.count++;
+        entry.lineIndices.push(i);
+        if (cellKey) {
+            entry.cellCounts[cellKey] = (entry.cellCounts[cellKey] || 0) + 1;
+        }
     }
+
+    // 유효한 셀(5건 이상)이 하나라도 있는지 마킹
+    Object.keys(index).forEach(cat => {
+        Object.keys(index[cat]).forEach(itemName => {
+            const item = index[cat][itemName];
+            item.hasValidCell = Object.values(item.cellCounts).some(c => c >= 5);
+        });
+    });
+
     return index;
 };
 
@@ -420,11 +439,13 @@ const renderGrid = (filterText = '') => {
 
     // ITEM_INDEX 기반 렌더링 (무거운 처리 없이 이름만 표시)
     const catIndex = ITEM_INDEX[currentCategory] || {};
-    let items = Object.entries(catIndex).map(([name, info]) => ({
-        name,
-        count: info.count,
-        category: currentCategory
-    }));
+    let items = Object.entries(catIndex)
+        .filter(([name, info]) => info.hasValidCell)
+        .map(([name, info]) => ({
+            name,
+            count: info.count,
+            category: currentCategory
+        }));
 
     if (filterText) items = items.filter(item => item.name.includes(filterText));
     items.sort((a, b) => b.count - a.count);
