@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Price Tracker</title>
+    <!-- Tailwind CSS (via CDN for prototype) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gray-50 text-gray-900 font-sans antialiased overflow-hidden h-screen flex">
+
+    <!-- Mobile Overlay for Sidebar -->
+    <div id="mobile-sidebar-overlay" style="display: none;" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden">
+    </div>
+
+    <!-- Sidebar (Filters) -->
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 flex flex-col transform -translate-x-full md:translate-x-0 md:static md:flex transition-transform duration-300 ease-in-out">
+        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-600">농장 시세 조회</h1>
+                <p class="text-xs text-gray-500 mt-1">시장 시세 현황</p>
+            </div>
+            <!-- Mobile Close Button -->
+            <button id="close-sidebar" class="md:hidden text-gray-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="p-6 flex-1 overflow-y-auto space-y-6">
+            <!-- Category Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">물품 분류</label>
+                <div class="flex space-x-2">
+                    <button class="filter-btn active w-1/2 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+                        data-category="equip">장비</button>
+                    <button class="filter-btn w-1/2 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
+                        data-category="acc">악세서리</button>
+                </div>
+            </div>
+
+            <!-- Dynamic Filters (Injected by JS) -->
+            <div id="dynamic-filters" class="space-y-4">
+                <!-- Filters will be rendered here -->
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-gray-200 text-center text-xs text-gray-400">
+            프로토타입 v0.1
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative w-full bg-gray-50">
+        <!-- Header -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 shadow-sm">
+            <div class="flex items-center gap-3">
+                <!-- Mobile Menu Button -->
+                <button id="open-sidebar" class="md:hidden text-gray-500 hover:text-gray-900">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                <h2 class="text-lg font-semibold truncate" id="page-title">전체 아이템</h2>
+            </div>
+            <div class="text-xs md:text-sm text-gray-500 whitespace-nowrap">업데이트: <span
+                    class="text-gray-900 font-medium">2026.01.11</span></div>
+        </header>
+
+        <!-- Item Grid -->
+        <div class="flex-1 overflow-y-auto p-8">
+            <div id="item-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- 아이템이 여기에 표시됩니다 -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Detail Modal -->
+    <div id="modal-overlay" style="display: none;"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-end md:items-center justify-center md:p-4">
+        <div class="bg-white md:rounded-xl border-t md:border border-gray-200 shadow-2xl w-full max-w-5xl h-[90vh] md:h-auto md:max-h-[90vh] flex flex-col overflow-hidden transform transition-all translate-y-full md:translate-y-0 md:scale-95 md:opacity-0"
+            id="modal-content">
+
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-gray-100 flex justify-between items-start bg-gray-50">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center gap-3" id="modal-title">
+                        ITEM NAME
+                        <span class="text-sm px-2 py-1 rounded bg-gray-200 text-gray-700 font-normal"
+                            id="modal-subtitle">SUB INFO</span>
+                    </h3>
+                </div>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-900 transition flex items-center justify-center rounded-full hover:bg-gray-200 p-1">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-hidden flex flex-col lg:flex-row bg-white">
+
+                <!-- Left: Matrix View (Equipment Only) or Info List -->
+                <div
+                    class="w-full lg:w-1/2 p-4 md:p-6 overflow-y-auto border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50/50">
+                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">시세표 (강화/내구도)</h4>
+                    <div id="matrix-container" class="overflow-x-auto pb-4">
+                        <!-- Matrix Table inject here -->
+                        <div class="flex items-center justify-center h-64 text-gray-400">
+                            아이템을 선택해주세요
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Chart & Stats -->
+                <div class="w-full lg:w-1/2 p-6 flex flex-col bg-white">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider">시세 변동 기록</h4>
+                        <div class="flex gap-2">
+                            <!-- Y Scale Toggle -->
+                            <div class="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
+                                <button
+                                    class="y-scale-btn active text-xs px-2 py-1 rounded bg-white text-blue-600 font-medium shadow-sm border border-gray-200"
+                                    data-scale="zoom">확대</button>
+                                <button
+                                    class="y-scale-btn text-xs px-2 py-1 rounded text-gray-500 hover:text-gray-900 transition"
+                                    data-scale="normal">일반</button>
+                            </div>
+                            <!-- Date Range Toggle (All) -->
+                            <div class="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
+                                <button
+                                    class="chart-range-btn active text-xs px-2 py-1 rounded bg-white text-blue-600 font-medium shadow-sm border border-gray-200"
+                                    data-range="all">전체</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Area -->
+                    <div class="flex-1 bg-white rounded-lg p-4 relative min-h-[300px] border border-gray-100 shadow-sm">
+                        <canvas id="priceChart"></canvas>
+                        <div id="chart-placeholder"
+                            class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                            표의 칸을 클릭하여 상세 정보를 확인하세요
+                        </div>
+                    </div>
+
+                    <!-- Current Stats -->
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <div class="text-xs text-gray-500 font-medium">현재 추정가</div>
+                            <div class="text-2xl font-bold text-red-500 mt-1" id="stat-price">-</div>
+                        </div>
+                        <!-- Removed Frequency Box -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js" onerror=""></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
