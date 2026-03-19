@@ -53,7 +53,7 @@ const init = () => {
             modalTitle: document.getElementById('modal-title'),
             modalSubtitle: document.getElementById('modal-subtitle'),
             matrixContainer: document.getElementById('matrix-container'),
-            statPrice: document.getElementById('stat-price'),
+            statPrice: null, // Removed (Unpredictable)
             // statFreq removed
             chartCanvas: document.getElementById('priceChart'),
             chartPlaceholder: document.getElementById('chart-placeholder'),
@@ -506,8 +506,7 @@ const renderVariantList = (item) => {
 
     if (priceChart) { priceChart.destroy(); priceChart = null; }
     if (elements.chartPlaceholder) elements.chartPlaceholder.classList.remove('hidden');
-    elements.statPrice.textContent = '-';
-    // No statFreq update here
+    // statPrice update removed
 };
 
 const selectVariant = (item, variant) => {
@@ -538,8 +537,6 @@ const selectVariant = (item, variant) => {
         // STRICT: DO NOT render chart yet for Equip. User must click Matrix cell.
         if (priceChart) { priceChart.destroy(); priceChart = null; }
         if (elements.chartPlaceholder) elements.chartPlaceholder.classList.remove('hidden');
-        elements.statPrice.textContent = '-';
-
     } else {
         const info = document.createElement('div');
         info.className = "text-center text-gray-500 mt-10 p-4 bg-gray-50 rounded border border-gray-200";
@@ -588,7 +585,7 @@ const loadDataAndRender = (history, count) => {
         currentChartData = history;
         // Update Stats (using last item price)
         const lastPrice = history.length > 0 ? history[history.length - 1].price : 0;
-        if (elements.statPrice) elements.statPrice.textContent = lastPrice.toLocaleString() + "억";
+        // statPrice update removed
         // REMOVED statFreq update
 
         updateChart();
@@ -678,7 +675,7 @@ const updateChart = () => {
                     borderWidth: 2,
                     pointRadius: 0,
                     pointHoverRadius: 5,
-                    tension: 0.04,
+                    tension: 0.3,
                     fill: false,
                     spanGaps: false
                 }]
