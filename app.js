@@ -53,7 +53,7 @@ const init = () => {
             modalTitle: document.getElementById('modal-title'),
             modalSubtitle: document.getElementById('modal-subtitle'),
             matrixContainer: document.getElementById('matrix-container'),
-            statPrice: null, // Removed (Unpredictable)
+            statPrice: { textContent: '', style: {} }, // Safety stub (Prevent Firefox null-pointer)
             // statFreq removed
             chartCanvas: document.getElementById('priceChart'),
             chartPlaceholder: document.getElementById('chart-placeholder'),
