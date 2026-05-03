@@ -1,0 +1,122 @@
+/* Custom Scrollbar for Webkit */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #25262b; 
+}
+::-webkit-scrollbar-thumb {
+    background: #373a40; 
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #5c5f66; 
+}
+
+/* Base Styles */
+body {
+    background-color: #1a1b1e;
+    color: #c1c2c5;
+}
+
+/* Filter Button Active State */
+.filter-btn.active {
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+    font-weight: 600;
+    color: white;
+}
+
+/* Item Card Hover Effect */
+.item-card {
+    transition: all 0.2s ease;
+}
+.item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border-color: #3b82f6;
+}
+
+/* Matrix Table Styles */
+.matrix-table {
+    border-collapse: separate;
+    border-spacing: 2px;
+    width: 100%;
+}
+
+.matrix-cell {
+    width: 36px;
+    height: 36px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.1s;
+    background-color: #2c2e33; /* Default empty */
+    color: #5c5f66;
+}
+
+/* Durability Header */
+.matrix-header-col {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    text-align: center;
+    padding-bottom: 4px;
+}
+
+/* Reinforcement Header (Row Label) */
+.matrix-header-row {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    text-align: right;
+    padding-right: 8px;
+    font-weight: bold;
+}
+
+/* Cell States */
+.matrix-cell.has-data {
+    background-color: #1e3a8a; /* Blue-900 */
+    color: #93c5fd; /* Blue-300 */
+    font-weight: bold;
+    border: 1px solid #1d4ed8;
+}
+
+.matrix-cell.has-data:hover {
+    background-color: #2563eb; /* Blue-600 */
+    color: white;
+    transform: scale(1.1);
+}
+
+.matrix-cell.selected {
+    background-color: #3b82f6 !important; /* Blue-500 */
+    color: white !important;
+    box-shadow: 0 0 0 2px #60a5fa; /* Ring */
+    z-index: 10;
+}
+
+.matrix-cell.empty {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* Matrix Legend */
+.matrix-legend {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+.legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+}
+
+/* Modal Animation classes (managed by JS, but base transitions here) */
+#modal-content {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
