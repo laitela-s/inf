@@ -26,6 +26,12 @@ conflicts.yaml
 low_confidence_only.yaml
 trim_duplicates.py
 analyze_dups.py
-# Only keep the processed results and web files
 !processed_parsed.yaml
 !web/
+!bottajak/
+쌀멱.txt
+쌀멱.yaml
+쌀멱_utf8.txt
+ssal_*.txt
+recovered_*.txt
+*.py
