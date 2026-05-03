@@ -1,0 +1,26 @@
+# Ignore everything by default
+*
+
+# Allow these files at the root
+!index.html
+!app.js
+!style.css
+!data.txt
+!README.md
+!.gitignore
+
+# Allow folders if needed (but we want individual files)
+# !web/
+# !bottajak/
+
+# Ignore large models and scripts (already covered by *)
+models/
+logs/
+__pycache__/
+*.bak
+*.pyc
+*.yaml
+*.py
+*.txt
+# Exception for data.txt
+!data.txt

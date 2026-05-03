@@ -63,7 +63,9 @@ const init = () => {
             sidebar: document.getElementById('sidebar'),
             openSidebarBtn: document.getElementById('open-sidebar'),
             closeSidebarBtn: document.getElementById('close-sidebar'),
-            sidebarOverlay: document.getElementById('mobile-sidebar-overlay')
+            sidebarOverlay: document.getElementById('mobile-sidebar-overlay'),
+            lastUpdateHeader: document.getElementById('last-update-header'),
+            lastUpdateSidebar: document.getElementById('last-update-sidebar')
         };
 
         // 2. Setup Listeners
@@ -89,6 +91,7 @@ const loadData = () => {
                 .map(line => line.trim())
                 .filter(line => line.length > 0 && line.startsWith('('));
             ITEM_INDEX = buildQuickIndex(RAW_LINES);
+            updateLastUpdateUI(RAW_LINES);
             renderFilters();
             renderGrid();
         })
@@ -96,6 +99,7 @@ const loadData = () => {
             if (typeof window.FARM_DATA !== 'undefined') {
                 RAW_LINES = Array.isArray(window.FARM_DATA) ? window.FARM_DATA : [];
                 ITEM_INDEX = buildQuickIndex(RAW_LINES);
+                updateLastUpdateUI(RAW_LINES);
                 renderFilters();
                 renderGrid();
             } else {
@@ -124,6 +128,40 @@ const filterPriceOutliers = (history, multiplier = 3.0) => {
     const upperBound = q3 + (multiplier * iqr);
 
     return history.filter(h => h.price <= 0 || (h.price >= lowerBound && h.price <= upperBound));
+};
+
+// --- UPDATE LAST UPDATE UI: 데이터 기반 최신 날짜 표시 ---
+const updateLastUpdateUI = (lines) => {
+    if (!lines || lines.length === 0) return;
+    
+    let latest = null;
+    
+    for (const line of lines) {
+        const clean = line.replace(/^\(|\)$/g, '');
+        const dateStr = clean.split(',')[0].trim();
+        const parts = dateStr.split('.');
+        if (parts.length < 3) continue;
+        
+        // 날짜 비교용 Date 객체 생성
+        const d = new Date(parts[0], parts[1] - 1, parts[2], parts[3] || 0, parts[4] || 0);
+        if (!latest || d > latest) {
+            latest = d;
+        }
+    }
+    
+    if (latest && (elements.lastUpdateHeader || elements.lastUpdateSidebar)) {
+        const y = latest.getFullYear();
+        const m = String(latest.getMonth() + 1).padStart(2, '0');
+        const d = String(latest.getDate()).padStart(2, '0');
+        const formatted = `${y}.${m}.${d}`;
+        
+        if (elements.lastUpdateHeader) {
+            elements.lastUpdateHeader.textContent = formatted;
+        }
+        if (elements.lastUpdateSidebar) {
+            elements.lastUpdateSidebar.innerHTML = `업데이트: ${formatted}<br>프로토타입 v0.1`;
+        }
+    }
 };
 
 // --- QUICK INDEX: 빠른 1차 파싱 (아이템 이름 + 세부 셀 카운트까지 추출) ---
