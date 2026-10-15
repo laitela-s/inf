@@ -1,6 +1,5 @@
-// --- IMMEDIATE VISIBILITY CHECK ---
-// If this doesn't run, the file is not loading or has a syntax error.
-// alert("앱 스크립트 로드됨 (STEP 570)");
+// alert("앱 스크립트 로드됨 (v1.1 - Fixed StartDate/Scale)");
+console.log("Farm Price Tracker v1.1 Loaded");
 
 // --- GLOBAL ERROR HANDLER ---
 window.onerror = function (msg, url, line, col, error) {
@@ -17,10 +16,10 @@ let RAW_LINES = [];
 let ITEM_INDEX = {};
 let currentCategory = 'equip';
 let currentChartRange = 'all';
-let currentYScale = 'zoom';
+let currentYScale = 'normal';
 let currentChartData = [];
 let priceChart = null;
-const HIDE_UNDER_5 = false; // 기존: 5개 미만 옵션 노출 안함 (현재는 기능 끔)
+const HIDE_UNDER_3 = true; // 3개 미만 옵션 노출 안함
 
 // --- CSS INJECTION (Force Overlay Fix) ---
 const style = document.createElement('style');
@@ -63,7 +62,9 @@ const init = () => {
             sidebar: document.getElementById('sidebar'),
             openSidebarBtn: document.getElementById('open-sidebar'),
             closeSidebarBtn: document.getElementById('close-sidebar'),
-            sidebarOverlay: document.getElementById('mobile-sidebar-overlay')
+            sidebarOverlay: document.getElementById('mobile-sidebar-overlay'),
+            lastUpdateHeader: document.getElementById('last-update-header'),
+            lastUpdateSidebar: document.getElementById('last-update-sidebar')
         };
 
         // 2. Setup Listeners
@@ -89,6 +90,7 @@ const loadData = () => {
                 .map(line => line.trim())
                 .filter(line => line.length > 0 && line.startsWith('('));
             ITEM_INDEX = buildQuickIndex(RAW_LINES);
+            updateLastUpdateUI(RAW_LINES);
             renderFilters();
             renderGrid();
         })
@@ -96,6 +98,7 @@ const loadData = () => {
             if (typeof window.FARM_DATA !== 'undefined') {
                 RAW_LINES = Array.isArray(window.FARM_DATA) ? window.FARM_DATA : [];
                 ITEM_INDEX = buildQuickIndex(RAW_LINES);
+                updateLastUpdateUI(RAW_LINES);
                 renderFilters();
                 renderGrid();
             } else {
@@ -124,6 +127,40 @@ const filterPriceOutliers = (history, multiplier = 3.0) => {
     const upperBound = q3 + (multiplier * iqr);
 
     return history.filter(h => h.price <= 0 || (h.price >= lowerBound && h.price <= upperBound));
+};
+
+// --- UPDATE LAST UPDATE UI: 데이터 기반 최신 날짜 표시 ---
+const updateLastUpdateUI = (lines) => {
+    if (!lines || lines.length === 0) return;
+
+    let latest = null;
+
+    for (const line of lines) {
+        const clean = line.replace(/^\(|\)$/g, '');
+        const dateStr = clean.split(',')[0].trim();
+        const parts = dateStr.split('.');
+        if (parts.length < 3) continue;
+
+        // 날짜 비교용 Date 객체 생성
+        const d = new Date(parts[0], parts[1] - 1, parts[2], parts[3] || 0, parts[4] || 0);
+        if (!latest || d > latest) {
+            latest = d;
+        }
+    }
+
+    if (latest && (elements.lastUpdateHeader || elements.lastUpdateSidebar)) {
+        const y = latest.getFullYear();
+        const m = String(latest.getMonth() + 1).padStart(2, '0');
+        const d = String(latest.getDate()).padStart(2, '0');
+        const formatted = `${y}.${m}.${d}`;
+
+        if (elements.lastUpdateHeader) {
+            elements.lastUpdateHeader.textContent = formatted;
+        }
+        if (elements.lastUpdateSidebar) {
+            elements.lastUpdateSidebar.innerHTML = `업데이트: ${formatted}<br>프로토타입 v0.1`;
+        }
+    }
 };
 
 // --- QUICK INDEX: 빠른 1차 파싱 (아이템 이름 + 세부 셀 카운트까지 추출) ---
@@ -171,7 +208,7 @@ const buildQuickIndex = (lines) => {
     Object.keys(index).forEach(cat => {
         Object.keys(index[cat]).forEach(itemName => {
             const item = index[cat][itemName];
-            item.hasValidCell = Object.values(item.cellCounts).some(c => HIDE_UNDER_5 ? c >= 5 : true);
+            item.hasValidCell = Object.values(item.cellCounts).some(c => HIDE_UNDER_3 ? c >= 3 : true);
         });
     });
 
@@ -199,7 +236,7 @@ const processItemOnDemand = (cat, itemName) => {
         if (price <= 0) continue;
 
         const dateParts = entry.date.split('.');
-        const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+        const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], dateParts[3] || 0, dateParts[4] || 0);
         const historyItem = {
             date: dateObj.toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }),
             isoDate: dateObj,
@@ -240,8 +277,7 @@ const processItemOnDemand = (cat, itemName) => {
         }
     }
 
-    // Apply outlier filtering and thresholds
-    item.history = filterPriceOutliers(item.history);
+    // No outlier filtering, just sort by date
     item.history.sort((a, b) => a.isoDate - b.isoDate);
 
     const validVariants = {};
@@ -253,10 +289,9 @@ const processItemOnDemand = (cat, itemName) => {
             let matrixValidCount = 0;
 
             Object.entries(v.matrix).forEach(([mKey, m]) => {
-                m.history = filterPriceOutliers(m.history);
                 m.count = m.history.length;
 
-                if (HIDE_UNDER_5 ? m.count >= 5 : true) {
+                if (HIDE_UNDER_3 ? m.count >= 3 : true) {
                     m.history.sort((a, b) => a.isoDate - b.isoDate);
                     if (m.history.length > 0) {
                         m.price = m.history[m.history.length - 1].price;
@@ -268,17 +303,15 @@ const processItemOnDemand = (cat, itemName) => {
 
             if (matrixValidCount > 0) {
                 v.matrix = validMatrix;
-                v.history = filterPriceOutliers(v.history);
                 v.count = v.history.length;
                 v.history.sort((a, b) => a.isoDate - b.isoDate);
                 validVariants[vKey] = v;
                 hasValidVariant = true;
             }
         } else {
-            v.history = filterPriceOutliers(v.history);
             v.count = v.history.length;
 
-            if (HIDE_UNDER_5 ? v.count >= 5 : true) {
+            if (HIDE_UNDER_3 ? v.count >= 3 : true) {
                 v.history.sort((a, b) => a.isoDate - b.isoDate);
                 validVariants[vKey] = v;
                 hasValidVariant = true;
@@ -477,7 +510,7 @@ const renderGrid = (filterText = '') => {
             if (processed) {
                 openModal(processed);
             } else {
-                alert(HIDE_UNDER_5 ? "유효한 데이터가 부족합니다 (5건 미만)." : "유효한 데이터가 존재하지 않습니다.");
+                alert(HIDE_UNDER_3 ? "유효한 데이터가 부족합니다 (3건 미만)." : "유효한 데이터가 존재하지 않습니다.");
             }
         };
         grid.appendChild(card);
@@ -518,6 +551,9 @@ const openModal = (item) => {
         elements.modalContent.style.transform = 'translateY(0)';
         elements.modalContent.style.display = 'flex';
 
+        const modalBody = document.getElementById('modal-body-container');
+        if (modalBody) modalBody.scrollTop = 0;
+
     } catch (e) {
         alert("모달 열기 실패: " + e.message);
     }
@@ -540,7 +576,10 @@ const renderVariantList = (item) => {
         // STRICT: Hide Price AND Count on Button (User Request)
         btn.className = "p-3 bg-white hover:bg-blue-50 rounded shadow-sm text-left border border-gray-200 hover:border-blue-300 flex justify-between items-center transition";
         btn.innerHTML = `
-            <div class="text-gray-900 font-bold text-sm text-center w-full">${v.name}</div>
+            <div class="text-gray-900 font-bold text-sm text-center w-full">
+                ${v.name}
+                <span class="text-[11px] text-gray-400 font-normal ml-1">${v.count}건</span>
+            </div>
         `;
         btn.onclick = () => selectVariant(item, v);
         list.appendChild(btn);
@@ -569,6 +608,10 @@ const selectVariant = (item, variant) => {
     backBtn.onclick = (e) => {
         e.stopPropagation(); // Safe logic
         renderVariantList(item);
+        const modalBody = document.getElementById('modal-body-container');
+        if (modalBody) {
+            modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     };
 
     header.appendChild(backBtn);
@@ -591,6 +634,14 @@ const selectVariant = (item, variant) => {
 
         // For Acc, Grade IS the final step, so we show chart
         loadDataAndRender(variant.history, variant.count);
+        if (window.innerWidth < 1024) {
+            const chartSec = document.getElementById('chart-section');
+            if (chartSec) {
+                setTimeout(() => {
+                    chartSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
     }
 };
 
@@ -613,11 +664,27 @@ const renderMatrix = (variant, container) => {
         const cell = document.createElement('div');
 
         // STRICT: Hide Price on Cell
-        cell.className = "bg-white p-2 rounded shadow-sm text-center cursor-pointer border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition flex flex-col items-center justify-center min-h-[50px]";
+        cell.className = "matrix-choice-cell bg-white p-2 rounded shadow-sm text-center cursor-pointer border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition flex flex-col items-center justify-center min-h-[50px]";
         cell.innerHTML = `
             <div class="text-sm font-bold text-gray-900">${e}/${dur}</div>
+            <div class="text-[10px] text-gray-400 font-normal">${d.count}건</div>
         `;
-        cell.onclick = () => loadDataAndRender(d.history, d.count);
+        cell.onclick = () => {
+            const allCells = grid.querySelectorAll('.matrix-choice-cell');
+            allCells.forEach(c => c.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50'));
+            cell.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50');
+
+            loadDataAndRender(d.history, d.count);
+
+            if (window.innerWidth < 1024) {
+                const chartSec = document.getElementById('chart-section');
+                if (chartSec) {
+                    setTimeout(() => {
+                        chartSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                }
+            }
+        };
         grid.appendChild(cell);
     });
     container.appendChild(grid);
@@ -643,6 +710,8 @@ const updateChart = () => {
         if (!elements.chartCanvas || typeof Chart === 'undefined') return;
         if (elements.chartPlaceholder) elements.chartPlaceholder.classList.add('hidden');
         if (priceChart) priceChart.destroy();
+        
+        console.log(`Rendering Chart: Range=${currentChartRange}, YScale=${currentYScale}`);
 
         // 1. Filter Data by Range
         let filteredData = [...currentChartData];
@@ -653,31 +722,22 @@ const updateChart = () => {
         }
         filteredData.sort((a, b) => a.isoDate - b.isoDate);
 
-        // 2. Smooth Data (Simple Moving Average)
-        const prices = filteredData.map(d => d.price);
-        const smoothedPrices = [];
-        const windowSize = 3;
-        for (let i = 0; i < prices.length; i++) {
-            let sum = 0;
-            let count = 0;
-            for (let j = Math.max(0, i - windowSize + 1); j <= i; j++) {
-                sum += prices[j];
-                count++;
-            }
-            smoothedPrices.push(sum / count);
-        }
-
-        // 오늘 날짜를 명시적으로 구성 (한국 시간대)
-        const nowParts = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).split(/[- T:]/);
-        const today = new Date(Number(nowParts[0]), Number(nowParts[1]) - 1, Number(nowParts[2]));
-        const todayTime = today.getTime();
+        const now = new Date();
+        const todayTime = now.getTime();
 
         const displayData = [];
+        // Calculate a small epsilon based on the range (0.2% of range)
+        const firstT = filteredData.length > 0 ? filteredData[0].isoDate.getTime() : todayTime;
+        const range = todayTime - firstT;
+        const eps = range > 0 ? range * 0.002 : 1000 * 60 * 30; // default 30min if no range
+
         for (let i = 0; i < filteredData.length; i++) {
-            displayData.push({
-                x: filteredData[i].isoDate.getTime(),
-                y: smoothedPrices[i]
-            });
+            const t = filteredData[i].isoDate.getTime();
+            const p = filteredData[i].price;
+            // Create a tiny horizontal segment to represent the "point"
+            // Use groupId to distinguish between "within point" and "between points"
+            displayData.push({ x: t - eps, y: p, groupId: i });
+            displayData.push({ x: t + eps, y: p, groupId: i });
         }
 
         // 마지막 거래 이후 선 끊기
@@ -687,11 +747,12 @@ const updateChart = () => {
         }
 
         // 3개월 단위 틱 생성 (25.3, 25.6, 25.9, 25.12 ...)
-        const firstTime = displayData.length > 0 ? displayData[0].x : todayTime;
-        const firstDate = new Date(firstTime);
+        const fixedStartTime = new Date(2025, 1, 12).getTime();
+        const firstTime = displayData.length > 0 ? Math.min(displayData[0].x, fixedStartTime) : fixedStartTime;
+        const firstDate = new Date(fixedStartTime);
         const quarterTicks = [];
         let tickYear = firstDate.getFullYear();
-        let tickMonth = Math.floor(firstDate.getMonth() / 3) * 3;
+        let tickMonth = firstDate.getMonth(); // 2월 12일부터 시작하므로 월 그대로 사용
         while (true) {
             const tickDate = new Date(tickYear, tickMonth, 1);
             const tickTime = tickDate.getTime();
@@ -717,7 +778,11 @@ const updateChart = () => {
                     borderColor: '#ef4444',
                     borderWidth: 2,
                     pointRadius: 0,
-                    pointHoverRadius: 5,
+                    pointHoverRadius: 6,
+                    segment: {
+                        borderColor: ctx => (ctx.p0.raw && ctx.p1.raw && ctx.p0.raw.groupId === ctx.p1.raw.groupId) ? '#3b82f6' : '#ef4444',
+                        borderWidth: ctx => (ctx.p0.raw && ctx.p1.raw && ctx.p0.raw.groupId === ctx.p1.raw.groupId) ? 3 : 1.5
+                    },
                     tension: 0.3,
                     fill: false,
                     spanGaps: false
@@ -730,7 +795,7 @@ const updateChart = () => {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            title: function(context) {
+                            title: function (context) {
                                 const d = new Date(context[0].parsed.x);
                                 return d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate();
                             },
@@ -745,16 +810,16 @@ const updateChart = () => {
                     x: {
                         type: 'linear',
                         display: true,
-                        min: firstTime,
+                        min: fixedStartTime,
                         max: todayTime,
-                        afterBuildTicks: function(axis) {
+                        afterBuildTicks: function (axis) {
                             axis.ticks = quarterTicks.map(t => ({ value: t }));
                         },
                         ticks: {
                             color: '#6b7280',
                             maxRotation: 0,
                             minRotation: 0,
-                            callback: function(value) {
+                            callback: function (value) {
                                 const d = new Date(value);
                                 const yy = String(d.getFullYear()).slice(-2);
                                 const m = d.getMonth() + 1;

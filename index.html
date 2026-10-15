@@ -109,12 +109,14 @@
             </div>
 
             <!-- Modal Body -->
-            <div class="flex-1 overflow-hidden flex flex-col lg:flex-row bg-white">
+            <div id="modal-body-container" class="flex-1 overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row bg-white">
 
                 <!-- Left: Matrix View (Equipment Only) or Info List -->
                 <div
-                    class="w-full lg:w-1/2 p-4 md:p-6 overflow-y-auto border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50/50">
-                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">시세표 (강화/내구도)</h4>
+                    class="w-full lg:w-1/2 p-4 md:p-6 flex-shrink-0 lg:flex-shrink lg:overflow-y-auto border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50/50">
+                    <h4 class="text-sm font-bold text-gray-600 uppercase tracking-wider mb-3 flex items-center justify-between">
+                        <span>시세표 (옵션 / 강화 / 내구도)</span>
+                    </h4>
                     <div id="matrix-container" class="overflow-x-auto pb-4">
                         <!-- Matrix Table inject here -->
                         <div class="flex items-center justify-center h-64 text-gray-400">
@@ -124,20 +126,20 @@
                 </div>
 
                 <!-- Right: Chart & Stats -->
-                <div class="w-full lg:w-1/2 p-6 flex flex-col bg-white">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider">시세 변동 기록</h4>
+                <div id="chart-section" class="w-full lg:w-1/2 p-4 md:p-6 flex flex-col bg-white flex-shrink-0 lg:flex-shrink">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-sm font-bold text-gray-600 uppercase tracking-wider">시세 변동 기록</h4>
                         <div class="flex gap-2">
                             <!-- Y Scale Toggle -->
                             <div class="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
                                 <button
-                                    class="y-scale-btn active text-xs px-2 py-1 rounded bg-white text-blue-600 font-medium shadow-sm border border-gray-200"
+                                    class="y-scale-btn text-xs px-2 py-1 rounded text-gray-500 hover:text-gray-900 transition"
                                     data-scale="zoom">확대</button>
                                 <button
-                                    class="y-scale-btn text-xs px-2 py-1 rounded text-gray-500 hover:text-gray-900 transition"
+                                    class="y-scale-btn active text-xs px-2 py-1 rounded bg-white text-blue-600 font-medium shadow-sm border border-gray-200"
                                     data-scale="normal">일반</button>
                             </div>
-                            <!-- Date Range Toggle (All) -->
+                            <!-- Date Range Toggle -->
                             <div class="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
                                 <button
                                     class="chart-range-btn active text-xs px-2 py-1 rounded bg-white text-blue-600 font-medium shadow-sm border border-gray-200"
@@ -147,11 +149,11 @@
                     </div>
 
                     <!-- Chart Area -->
-                    <div class="flex-1 bg-white rounded-lg p-4 relative min-h-[300px] border border-gray-100 shadow-sm">
+                    <div class="flex-1 bg-white rounded-lg p-2 md:p-4 relative min-h-[260px] md:min-h-[300px] border border-gray-100 shadow-sm">
                         <canvas id="priceChart"></canvas>
                         <div id="chart-placeholder"
-                            class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
-                            표의 칸을 클릭하여 상세 정보를 확인하세요
+                            class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm p-4 text-center">
+                            위 시세표의 옵션/스펙을 터치하여 상세 기록을 확인하세요
                         </div>
                     </div>
 
