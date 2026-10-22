@@ -18,10 +18,92 @@ let currentCategory = 'equip';
 let currentChartRange = 'all';
 let currentYScale = 'normal';
 let currentChartMode = 'curve'; // 'curve' (시세곡선) | 'compare' (원본비교)
+let currentSortMode = (function () {
+    try {
+        const saved = localStorage.getItem('farm_sort_mode');
+        if (saved === 'korean' || saved === 'freq') return saved;
+    } catch (e) {}
+    return 'freq';
+})();
 let currentChartData = [];
 let currentAnalysis = null;
 let priceChart = null;
 const HIDE_UNDER_3 = true; // 3개 미만 옵션 노출 안함
+
+// 정렬 알고리즘: 빈도순(거래량순) vs ㄱㄴㄷ순(한국어 가나다순)
+const sortItemsOrVariants = (list, mode = currentSortMode) => {
+    if (!Array.isArray(list)) return [];
+    if (mode === 'korean') {
+        return list.slice().sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true }));
+    }
+    // 기본값: 빈도순 (거래 건수 내림차순, 동률 시 가나다순)
+    return list.slice().sort((a, b) => (b.count - a.count) || a.name.localeCompare(b.name, 'ko', { numeric: true }));
+};
+
+const updateSortUI = () => {
+    const isFreq = currentSortMode === 'freq';
+
+    // 1. 상단바 드롭다운 버튼 텍스트
+    const sortText = document.getElementById('current-sort-text');
+    if (sortText) {
+        sortText.textContent = isFreq ? '정렬: 빈도순' : '정렬: ㄱㄴㄷ순';
+    }
+
+    // 2. 상단바 드롭다운 내부 체크마크 및 액티브 스타일
+    const checkFreq = document.getElementById('check-freq');
+    const checkKorean = document.getElementById('check-korean');
+    const btnFreq = document.querySelector('.sort-select-option[data-sort="freq"]');
+    const btnKorean = document.querySelector('.sort-select-option[data-sort="korean"]');
+
+    if (checkFreq) checkFreq.classList.toggle('hidden', !isFreq);
+    if (checkKorean) checkKorean.classList.toggle('hidden', isFreq);
+
+    if (btnFreq) {
+        if (isFreq) {
+            btnFreq.classList.add('text-blue-600', 'bg-blue-50/50');
+            btnFreq.classList.remove('text-gray-700');
+        } else {
+            btnFreq.classList.remove('text-blue-600', 'bg-blue-50/50');
+            btnFreq.classList.add('text-gray-700');
+        }
+    }
+
+    if (btnKorean) {
+        if (!isFreq) {
+            btnKorean.classList.add('text-blue-600', 'bg-blue-50/50');
+            btnKorean.classList.remove('text-gray-700');
+        } else {
+            btnKorean.classList.remove('text-blue-600', 'bg-blue-50/50');
+            btnKorean.classList.add('text-gray-700');
+        }
+    }
+
+    // 3. 사이드바 정렬 버튼 동기화
+    document.querySelectorAll('.sidebar-sort-btn').forEach(btn => {
+        const mode = btn.dataset.sort;
+        if (mode === currentSortMode) {
+            btn.classList.add('active', 'bg-blue-600', 'text-white');
+            btn.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+        } else {
+            btn.classList.remove('active', 'bg-blue-600', 'text-white');
+            btn.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+        }
+    });
+};
+
+const setSortMode = (mode) => {
+    if (mode !== 'freq' && mode !== 'korean') return;
+    currentSortMode = mode;
+    try {
+        localStorage.setItem('farm_sort_mode', mode);
+    } catch (e) {}
+
+    updateSortUI();
+
+    visibleLimit = BATCH_SIZE;
+    const currentSearch = document.getElementById('search-input')?.value || '';
+    renderGrid(currentSearch);
+};
 
 // --- CSS INJECTION (Force Overlay Fix) ---
 const style = document.createElement('style');
@@ -91,6 +173,7 @@ const loadData = () => {
                 .filter(line => line.length > 0 && line.startsWith('('));
             ITEM_INDEX = buildQuickIndex(RAW_LINES);
             updateLastUpdateUI(RAW_LINES);
+            updateSortUI();
             renderFilters();
             renderGrid();
         })
@@ -414,6 +497,56 @@ const setupEventListeners = () => {
         if (e.target === elements.modalOverlay) closeModal();
     };
 
+    // --- SORT DROPDOWN (상단바) & SIDEBAR SORT ---
+    const sortDropdownWrapper = document.getElementById('sort-dropdown-wrapper');
+    const sortDropdownToggle = document.getElementById('sort-dropdown-toggle');
+    const sortDropdownMenu = document.getElementById('sort-dropdown-menu');
+    const sortDropdownIcon = document.getElementById('sort-dropdown-icon');
+
+    const toggleSortDropdown = (forceClose = false) => {
+        if (!sortDropdownMenu) return;
+        const isClosed = sortDropdownMenu.classList.contains('hidden');
+        if (forceClose || !isClosed) {
+            sortDropdownMenu.classList.add('hidden');
+            if (sortDropdownIcon) sortDropdownIcon.classList.remove('rotate-180');
+        } else {
+            sortDropdownMenu.classList.remove('hidden');
+            if (sortDropdownIcon) sortDropdownIcon.classList.add('rotate-180');
+        }
+    };
+
+    if (sortDropdownToggle) {
+        sortDropdownToggle.onclick = (e) => {
+            e.stopPropagation();
+            toggleSortDropdown();
+        };
+    }
+
+    document.querySelectorAll('.sort-select-option').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const mode = e.currentTarget.dataset.sort;
+            setSortMode(mode);
+            toggleSortDropdown(true);
+        };
+    });
+
+    // 바깥 영역 클릭 시 상단바 드롭다운 닫기
+    document.addEventListener('click', (e) => {
+        if (sortDropdownWrapper && !sortDropdownWrapper.contains(e.target)) {
+            toggleSortDropdown(true);
+        }
+    });
+
+    // 사이드바 정렬 버튼 이벤트
+    document.querySelectorAll('.sidebar-sort-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            const mode = e.currentTarget.dataset.sort;
+            setSortMode(mode);
+        };
+    });
+
+    updateSortUI();
 };
 
 // --- SCROLL STATE ---
@@ -451,7 +584,7 @@ const renderGrid = (filterText = '') => {
         }));
 
     if (filterText) items = items.filter(item => item.name.includes(filterText));
-    items.sort((a, b) => b.count - a.count);
+    items = sortItemsOrVariants(items, currentSortMode);
 
     if (items.length === 0) {
         grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10">데이터가 없습니다.</div>`;
@@ -530,7 +663,34 @@ const renderVariantList = (item) => {
     const container = elements.matrixContainer;
     container.innerHTML = '';
 
-    const variants = Object.values(item.variants).sort((a, b) => b.count - a.count);
+    // 헤더 영역: 옵션/등급 카운트 및 모달 내 정렬 토글
+    const headerRow = document.createElement('div');
+    headerRow.className = "flex justify-between items-center px-2 py-1.5 mb-3 text-xs text-gray-600 bg-gray-50 rounded-lg border border-gray-200/80";
+
+    const countLabel = item.category === 'equip' ? '옵션' : '등급';
+    const isFreq = currentSortMode === 'freq';
+    headerRow.innerHTML = `
+        <span class="font-bold text-gray-700">${countLabel} 목록 (${Object.keys(item.variants).length}개)</span>
+        <div class="flex items-center gap-1 bg-white rounded-md p-0.5 border border-gray-200 shadow-2xs">
+            <button class="modal-sort-toggle-btn px-2 py-0.5 rounded text-[11px] font-semibold transition ${isFreq ? 'bg-blue-600 text-white shadow-xs' : 'text-gray-500 hover:text-gray-900'}" data-sort="freq">
+                빈도순
+            </button>
+            <button class="modal-sort-toggle-btn px-2 py-0.5 rounded text-[11px] font-semibold transition ${!isFreq ? 'bg-blue-600 text-white shadow-xs' : 'text-gray-500 hover:text-gray-900'}" data-sort="korean">
+                ㄱㄴㄷ순
+            </button>
+        </div>
+    `;
+
+    headerRow.querySelectorAll('.modal-sort-toggle-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            setSortMode(e.currentTarget.dataset.sort);
+            renderVariantList(item);
+        };
+    });
+    container.appendChild(headerRow);
+
+    const variants = sortItemsOrVariants(Object.values(item.variants), currentSortMode);
 
     const list = document.createElement('div');
     list.className = "grid grid-cols-2 gap-3 p-2";

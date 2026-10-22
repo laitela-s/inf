@@ -47,34 +47,79 @@
                 </div>
             </div>
 
+            <!-- Sort Order Filter (Sidebar) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">정렬 방식</label>
+                <div class="flex space-x-2">
+                    <button class="sidebar-sort-btn active w-1/2 py-2 rounded-lg bg-blue-600 text-white font-medium text-xs transition shadow-sm"
+                        data-sort="freq">🔥 빈도순</button>
+                    <button class="sidebar-sort-btn w-1/2 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium text-xs transition"
+                        data-sort="korean">🔤 ㄱㄴㄷ순</button>
+                </div>
+            </div>
+
             <!-- Dynamic Filters (Injected by JS) -->
             <div id="dynamic-filters" class="space-y-4">
                 <!-- Filters will be rendered here -->
             </div>
         </div>
 
-            <div id="last-update-sidebar" class="mt-auto pt-6 border-t border-gray-100 text-[10px] text-gray-400">
-                업데이트: 로딩 중...<br>
-                프로토타입 v0.1
-            </div>
+        <div id="last-update-sidebar" class="mt-auto pt-6 border-t border-gray-100 text-[10px] text-gray-400">
+            업데이트: 로딩 중...<br>
+            프로토타입 v0.1
+        </div>
     </aside>
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col h-full relative w-full bg-gray-50">
-        <!-- Header -->
-        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 shadow-sm">
-            <div class="flex items-center gap-3">
+        <!-- Header (스크롤 맨 위 상단바) -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-3 md:px-8 shadow-sm">
+            <div class="flex items-center gap-2 md:gap-3 min-w-0">
                 <!-- Mobile Menu Button -->
-                <button id="open-sidebar" class="md:hidden text-gray-500 hover:text-gray-900">
+                <button id="open-sidebar" class="md:hidden text-gray-500 hover:text-gray-900 p-1">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
-                <h2 class="text-lg font-semibold truncate" id="page-title">전체 아이템</h2>
+                <h2 class="text-base md:text-lg font-semibold truncate" id="page-title">전체 아이템</h2>
             </div>
-            <div class="text-xs md:text-sm text-gray-500 whitespace-nowrap">업데이트: <span
-                    id="last-update-header" class="text-gray-900 font-medium">로딩 중...</span></div>
+
+            <!-- Top Bar Controls (정렬방식 드롭다운 선택 메뉴 & 업데이트 날짜) -->
+            <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                <!-- Sort Dropdown Menu (상단바를 열어 정렬방식 선택) -->
+                <div class="relative" id="sort-dropdown-wrapper">
+                    <button id="sort-dropdown-toggle" type="button"
+                        class="flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs md:text-sm font-semibold border border-gray-200 transition shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
+                        </svg>
+                        <span id="current-sort-text">정렬: 빈도순</span>
+                        <svg id="sort-dropdown-icon" class="w-3.5 h-3.5 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <!-- Dropdown Panel -->
+                    <div id="sort-dropdown-menu"
+                        class="hidden absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50">
+                        <div class="px-3 py-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                            정렬 방식 선택
+                        </div>
+                        <button class="sort-select-option w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-blue-50 flex items-center justify-between transition text-blue-600 bg-blue-50/50" data-sort="freq">
+                            <span class="flex items-center gap-1.5">🔥 빈도순 (거래량순)</span>
+                            <span class="sort-check text-blue-600 font-bold" id="check-freq">✓</span>
+                        </button>
+                        <button class="sort-select-option w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-blue-50 flex items-center justify-between transition text-gray-700" data-sort="korean">
+                            <span class="flex items-center gap-1.5">🔤 ㄱㄴㄷ순 (이름순)</span>
+                            <span class="sort-check text-blue-600 font-bold hidden" id="check-korean">✓</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="hidden sm:block text-xs md:text-sm text-gray-500 whitespace-nowrap border-l border-gray-200 pl-3">
+                    업데이트: <span id="last-update-header" class="text-gray-900 font-medium">로딩 중...</span>
+                </div>
+            </div>
         </header>
 
         <!-- Item Grid -->
