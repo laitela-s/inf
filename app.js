@@ -17,7 +17,9 @@ let ITEM_INDEX = {};
 let currentCategory = 'equip';
 let currentChartRange = 'all';
 let currentYScale = 'normal';
+let currentChartMode = 'curve'; // 'curve' (시세곡선) | 'compare' (원본비교)
 let currentChartData = [];
+let currentAnalysis = null;
 let priceChart = null;
 const HIDE_UNDER_3 = true; // 3개 미만 옵션 노출 안함
 
@@ -54,11 +56,9 @@ const init = () => {
             modalSubtitle: document.getElementById('modal-subtitle'),
             matrixContainer: document.getElementById('matrix-container'),
             statPrice: { textContent: '', style: {} }, // Safety stub (Prevent Firefox null-pointer)
-            // statFreq removed
+            marketSummaryCard: document.getElementById('market-summary-card'),
             chartCanvas: document.getElementById('priceChart'),
             chartPlaceholder: document.getElementById('chart-placeholder'),
-            chartRangeBtns: document.querySelectorAll('.chart-range-btn'),
-            yScaleBtns: document.querySelectorAll('.y-scale-btn'),
             sidebar: document.getElementById('sidebar'),
             openSidebarBtn: document.getElementById('open-sidebar'),
             closeSidebarBtn: document.getElementById('close-sidebar'),
@@ -414,37 +414,6 @@ const setupEventListeners = () => {
         if (e.target === elements.modalOverlay) closeModal();
     };
 
-    // --- CHART RANGE BUTTONS ---
-    if (elements.chartRangeBtns) {
-        elements.chartRangeBtns.forEach(btn => {
-            btn.onclick = (e) => {
-                elements.chartRangeBtns.forEach(b => {
-                    b.classList.remove('active', 'bg-white', 'text-blue-600', 'font-medium', 'shadow-sm', 'border', 'border-gray-200');
-                    b.classList.add('text-gray-500', 'hover:text-gray-900', 'hover:bg-gray-200');
-                });
-                e.target.classList.add('active', 'bg-white', 'text-blue-600', 'font-medium', 'shadow-sm', 'border', 'border-gray-200');
-                e.target.classList.remove('text-gray-500', 'hover:text-gray-900', 'hover:bg-gray-200');
-                currentChartRange = e.target.dataset.range;
-                updateChart();
-            };
-        });
-    }
-
-    // --- Y SCALE BUTTONS ---
-    if (elements.yScaleBtns) {
-        elements.yScaleBtns.forEach(btn => {
-            btn.onclick = (e) => {
-                elements.yScaleBtns.forEach(b => {
-                    b.classList.remove('active', 'bg-white', 'text-blue-600', 'font-medium', 'shadow-sm', 'border', 'border-gray-200');
-                    b.classList.add('text-gray-500', 'hover:text-gray-900', 'hover:bg-gray-200');
-                });
-                e.target.classList.add('active', 'bg-white', 'text-blue-600', 'font-medium', 'shadow-sm', 'border', 'border-gray-200');
-                e.target.classList.remove('text-gray-500', 'hover:text-gray-900', 'hover:bg-gray-200');
-                currentYScale = e.target.scale || e.target.dataset.scale;
-                updateChart();
-            };
-        });
-    }
 };
 
 // --- SCROLL STATE ---
@@ -498,9 +467,6 @@ const renderGrid = (filterText = '') => {
 
         card.innerHTML = `
             <div>
-                <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 font-medium">${item.count}건</span>
-                </div>
                 <h3 class="text-lg font-bold text-gray-900">${item.name}</h3>
             </div>
         `;
@@ -538,7 +504,6 @@ const renderGrid = (filterText = '') => {
 const openModal = (item) => {
     try {
         elements.modalTitle.textContent = item.name;
-        // Default Subtitle
         elements.modalSubtitle.textContent = item.category === 'equip' ? '옵션 선택' : '등급 선택';
 
         renderVariantList(item);
@@ -560,7 +525,6 @@ const openModal = (item) => {
 };
 
 const renderVariantList = (item) => {
-    // Reset Subtitle to instruction
     elements.modalSubtitle.textContent = item.category === 'equip' ? '옵션 선택' : '등급 선택';
 
     const container = elements.matrixContainer;
@@ -573,12 +537,10 @@ const renderVariantList = (item) => {
 
     variants.forEach(v => {
         const btn = document.createElement('button');
-        // STRICT: Hide Price AND Count on Button (User Request)
         btn.className = "p-3 bg-white hover:bg-blue-50 rounded shadow-sm text-left border border-gray-200 hover:border-blue-300 flex justify-between items-center transition";
         btn.innerHTML = `
             <div class="text-gray-900 font-bold text-sm text-center w-full">
                 ${v.name}
-                <span class="text-[11px] text-gray-400 font-normal ml-1">${v.count}건</span>
             </div>
         `;
         btn.onclick = () => selectVariant(item, v);
@@ -588,17 +550,16 @@ const renderVariantList = (item) => {
 
     if (priceChart) { priceChart.destroy(); priceChart = null; }
     if (elements.chartPlaceholder) elements.chartPlaceholder.classList.remove('hidden');
-    // statPrice update removed
+    if (elements.marketSummaryCard) elements.marketSummaryCard.classList.add('hidden');
 };
 
 const selectVariant = (item, variant) => {
-    // Update Subtitle
     elements.modalSubtitle.textContent = variant.name;
 
     const container = elements.matrixContainer;
     container.innerHTML = '';
 
-    // Back Button (Explicit Click Handler)
+    // Back Button
     const header = document.createElement('div');
     header.className = "mb-4 pb-2 border-b border-gray-200";
 
@@ -606,7 +567,7 @@ const selectVariant = (item, variant) => {
     backBtn.className = "text-sm text-blue-600 font-medium hover:text-blue-800 flex items-center gap-1 transition-colors";
     backBtn.innerHTML = `<span>◀</span> 목록으로 돌아가기`;
     backBtn.onclick = (e) => {
-        e.stopPropagation(); // Safe logic
+        e.stopPropagation();
         renderVariantList(item);
         const modalBody = document.getElementById('modal-body-container');
         if (modalBody) {
@@ -617,22 +578,21 @@ const selectVariant = (item, variant) => {
     header.appendChild(backBtn);
     container.appendChild(header);
 
-    // Render Matrix or Grade Info
     if (item.category === 'equip') {
         renderMatrix(variant, container);
-        // STRICT: DO NOT render chart yet for Equip. User must click Matrix cell.
         if (priceChart) { priceChart.destroy(); priceChart = null; }
         if (elements.chartPlaceholder) elements.chartPlaceholder.classList.remove('hidden');
+        if (elements.marketSummaryCard) elements.marketSummaryCard.classList.add('hidden');
     } else {
         const info = document.createElement('div');
-        info.className = "text-center text-gray-500 mt-10 p-4 bg-gray-50 rounded border border-gray-200";
+        info.id = "acc-detail-info-panel";
+        info.className = "mt-4 p-5 bg-white rounded-xl border border-gray-200 text-center shadow-sm";
         info.innerHTML = `
-            <div class="text-gray-900 font-bold text-lg mb-2">${variant.name}</div>
-            <div>해당 등급의 시세 기록입니다.</div>
+            <div class="text-xs text-gray-400 font-medium">선택된 등급</div>
+            <div class="text-xl font-bold text-blue-600 mt-1">${variant.name}</div>
         `;
         container.appendChild(info);
 
-        // For Acc, Grade IS the final step, so we show chart
         loadDataAndRender(variant.history, variant.count);
         if (window.innerWidth < 1024) {
             const chartSec = document.getElementById('chart-section');
@@ -648,7 +608,6 @@ const selectVariant = (item, variant) => {
 const renderMatrix = (variant, container) => {
     const keys = Object.keys(variant.matrix);
 
-    // Sort logic
     keys.sort((a, b) => {
         const [e1] = a.split('_');
         const [e2] = b.split('_');
@@ -663,11 +622,9 @@ const renderMatrix = (variant, container) => {
         const [e, dur] = k.split('_');
         const cell = document.createElement('div');
 
-        // STRICT: Hide Price on Cell
         cell.className = "matrix-choice-cell bg-white p-2 rounded shadow-sm text-center cursor-pointer border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition flex flex-col items-center justify-center min-h-[50px]";
         cell.innerHTML = `
             <div class="text-sm font-bold text-gray-900">${e}/${dur}</div>
-            <div class="text-[10px] text-gray-400 font-normal">${d.count}건</div>
         `;
         cell.onclick = () => {
             const allCells = grid.querySelectorAll('.matrix-choice-cell');
@@ -690,14 +647,351 @@ const renderMatrix = (variant, container) => {
     container.appendChild(grid);
 };
 
+// ============================================================================
+// ★ ADAPTIVE MARKET MICROSTRUCTURE ENGINE (시세곡선 추상화 & 실시간 적정가 엔진)
+// ============================================================================
+const calcMedian = (arr) => {
+    if (!arr || arr.length === 0) return 0;
+    const s = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(s.length / 2);
+    return s.length % 2 !== 0 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+};
+
+const formatPriceEok = (val) => {
+    if (val === null || val === undefined || isNaN(val)) return '-';
+    if (val >= 100) return Math.round(val).toLocaleString('ko-KR') + '억';
+    if (val >= 10) return (Math.round(val * 10) / 10).toLocaleString('ko-KR') + '억';
+    return Number(val.toFixed(2)).toString() + '억';
+};
+
+/**
+ * 1D 2-Means (Otsu Bimodal Partition):
+ * 구매자(Bid)와 판매자(Ask)의 건수 비율이 9:1 또는 1:9로 극단적 비대칭이어도
+ * 두 호가 클러스터를 독립 분리하여 50:50 정중앙 균형 시세(Mid-Market Price)를 복원합니다.
+ */
+const bimodalBidAsk = (prices, weights) => {
+    if (!prices || prices.length === 0) return { mid: 0, bid: 0, ask: 0 };
+    const pairs = prices.map((p, i) => ({ p, w: weights ? weights[i] : 1.0 })).sort((a, b) => a.p - b.p);
+    const n = pairs.length;
+    const minP = pairs[0].p;
+    const maxP = pairs[n - 1].p;
+
+    if (n === 1 || (maxP - minP) <= Math.max(maxP * 0.03, 0.05)) {
+        let sw = 0, sp = 0;
+        for (const item of pairs) { sw += item.w; sp += item.p * item.w; }
+        const m = sw > 0 ? sp / sw : minP;
+        return { mid: m, bid: m, ask: m };
+    }
+
+    let bestCost = Infinity;
+    let bestBid = minP;
+    let bestAsk = maxP;
+    let bestW1 = 1.0;
+    let bestW2 = 1.0;
+
+    for (let k = 1; k < n; k++) {
+        if (pairs[k].p === pairs[k - 1].p) continue;
+
+        let w1 = 0, s1 = 0;
+        for (let i = 0; i < k; i++) { w1 += pairs[i].w; s1 += pairs[i].p * pairs[i].w; }
+        const m1 = s1 / Math.max(w1, 1e-9);
+        let v1 = 0;
+        for (let i = 0; i < k; i++) { v1 += pairs[i].w * Math.pow(pairs[i].p - m1, 2); }
+        v1 /= Math.max(w1, 1e-9);
+
+        let w2 = 0, s2 = 0;
+        for (let i = k; i < n; i++) { w2 += pairs[i].w; s2 += pairs[i].p * pairs[i].w; }
+        const m2 = s2 / Math.max(w2, 1e-9);
+        let v2 = 0;
+        for (let i = k; i < n; i++) { v2 += pairs[i].w * Math.pow(pairs[i].p - m2, 2); }
+        v2 /= Math.max(w2, 1e-9);
+
+        // 군집 크기 가중치를 배제한 순수 군집 내 분산 합 -> 소수 집단(1~2명)도 독립 호가 군집으로 보존
+        const cost = v1 + v2;
+        if (cost < bestCost) {
+            bestCost = cost;
+            bestBid = calcMedian(pairs.slice(0, k).map(x => x.p));
+            bestAsk = calcMedian(pairs.slice(k).map(x => x.p));
+            bestW1 = w1;
+            bestW2 = w2;
+        }
+    }
+
+    const consensus = calcMedian(prices);
+    const totalW = bestW1 + bestW2;
+    const ratio = Math.min(bestW1, bestW2) / Math.max(totalW, 1e-9);
+    // 양쪽 호가 군집이 1:2~1:3 수준까지는 50:50 스프레드 중간값을 온전히 보존(balanceFactor = 1.0)
+    // 1:6, 1:10 처럼 1명의 고립된 호가로 치우칠 경우 다수파 컨센서스로 앵커링하여 솟구침(오버슈트) 방지
+    const balanceFactor = Math.min(1.0, 3.5 * ratio);
+    const rawMid = 0.5 * (bestBid + bestAsk);
+    const mid = balanceFactor * rawMid + (1.0 - balanceFactor) * consensus;
+
+    return { mid, bid: bestBid, ask: bestAsk };
+};
+
+const computeMarketAnalysis = (rawHistory) => {
+    if (!rawHistory || rawHistory.length === 0) return null;
+
+    const DAY_MS = 86400 * 1000;
+    const sorted = [...rawHistory].sort((a, b) => a.isoDate - b.isoDate);
+
+    // [1단계] 동일인 일별 도배 통합 (1 User + 1 Day = 1 Representative Vote)
+    const dayUserMap = new Map();
+    const allUniqueUsers = new Set();
+
+    for (const h of sorted) {
+        const t = h.isoDate.getTime();
+        const dayIdx = Math.floor(t / DAY_MS);
+        const rawNick = h.meta?.nickname || 'anon';
+        const baseNick = rawNick.split('/')[0].trim() || 'anon';
+        allUniqueUsers.add(baseNick);
+
+        const key = `${dayIdx}__${baseNick}`;
+        if (!dayUserMap.has(key)) {
+            dayUserMap.set(key, []);
+        }
+        dayUserMap.get(key).push({ t, isoDate: h.isoDate, price: h.price, nick: baseNick });
+    }
+
+    const userDays = [];
+    for (const [, pts] of dayUserMap.entries()) {
+        pts.sort((a, b) => a.t - b.t);
+        const medP = calcMedian(pts.map(x => x.price));
+        const lastPt = pts[pts.length - 1];
+        userDays.push({
+            ts: lastPt.t,
+            isoDate: lastPt.isoDate,
+            dayIdx: Math.floor(lastPt.t / DAY_MS),
+            nick: lastPt.nick,
+            price: medP,
+            rawCount: pts.length
+        });
+    }
+    userDays.sort((a, b) => a.ts - b.ts);
+
+    // [2단계] 고유 유저(1인 1표) 기반 국소 햄펠 필터 & 단독 스파이크 보정
+    const globalMed = calcMedian(userDays.map(u => u.price));
+    let hardOutlierRawCount = 0;
+    let spikeClampedRawCount = 0;
+
+    for (let i = 0; i < userDays.length; i++) {
+        const ud = userDays[i];
+        const p = ud.price;
+
+        // 주변 +-45일 고유 유저 수집 (유저 수가 부족하면 +-90일, 전체로 확장)
+        let uMap = new Map();
+        for (const winDays of [45, 90, 99999]) {
+            uMap.clear();
+            for (const other of userDays) {
+                if (Math.abs(other.dayIdx - ud.dayIdx) <= winDays) {
+                    if (!uMap.has(other.nick)) uMap.set(other.nick, []);
+                    uMap.get(other.nick).push(other.price);
+                }
+            }
+            if (uMap.size >= Math.min(4, allUniqueUsers.size)) break;
+        }
+
+        const uMeds = [];
+        for (const [, pList] of uMap.entries()) {
+            uMeds.push(calcMedian(pList));
+        }
+
+        const lMed = uMeds.length > 0 ? calcMedian(uMeds) : globalMed;
+        const mad = calcMedian(uMeds.map(m => Math.abs(m - lMed)));
+        const sigma = Math.max(1.4826 * mad, lMed * 0.08);
+
+        // 본인 외에 이 가격(±10%)에 동의하는 다른 고유 유저 수
+        let otherUsersNear = 0;
+        for (const [uNick, pList] of uMap.entries()) {
+            if (uNick === ud.nick) continue;
+            if (pList.some(val => Math.abs(val - p) / Math.max(lMed, 1e-6) <= 0.10)) {
+                otherUsersNear++;
+            }
+        }
+
+        // 주변 ±25일 내 유사 가격(±8%)이 등장한 날짜 수
+        const simDays = new Set();
+        for (const other of userDays) {
+            if (Math.abs(other.dayIdx - ud.dayIdx) <= 25 && Math.abs(other.price - p) / Math.max(p, 1e-6) <= 0.08) {
+                simDays.add(other.dayIdx);
+            }
+        }
+
+        if (p > lMed * 1.85 || p < lMed * 0.45) {
+            // 1) 셋/피스 미분할 오류 또는 10배/0.1배 오타 및 극단적 투매
+            ud.status = 'hard_outlier';
+            hardOutlierRawCount += ud.rawCount;
+        } else if (userDays.length >= 6 && Math.abs(p - lMed) > 2.2 * sigma && simDays.size <= 2) {
+            // 2) 1~2일 단발성으로 튀는 오타/급처 특이값
+            ud.status = 'hard_outlier';
+            hardOutlierRawCount += ud.rawCount;
+        } else if (Math.abs(p - lMed) > 2.2 * sigma && otherUsersNear === 0) {
+            // 3) 단독 1인이 고립된 가격에 고집하는 미체결 알박기/배짱 호가 (동조자 0명) 제거
+            ud.status = 'hard_outlier';
+            hardOutlierRawCount += ud.rawCount;
+        } else {
+            ud.status = 'normal';
+            ud.effPrice = p;
+        }
+    }
+
+    let validUD = userDays.filter(u => u.status !== 'hard_outlier');
+    if (validUD.length === 0) {
+        validUD = userDays.map(u => ({ ...u, status: 'normal', effPrice: u.price }));
+    }
+
+    // [3단계] 적응형 타임 그리드 기반 2-Cluster 호가 분리 및 시세곡선 생성
+    const tStart = validUD[0].ts;
+    const tEnd = validUD[validUD.length - 1].ts;
+    const spanDays = Math.max(1, (tEnd - tStart) / DAY_MS);
+
+    // 전체 기간에 맞춰 7일 단위(또는 기간이 짧으면 세밀하게) 그리드 생성
+    const stepDays = spanDays > 180 ? 7 : Math.max(1, Math.floor(spanDays / 25));
+    const stepMs = stepDays * DAY_MS;
+
+    const gridPoints = [];
+    for (let curT = tStart; curT < tEnd; curT += stepMs) {
+        gridPoints.push(curT);
+    }
+    gridPoints.push(tEnd);
+
+    const minTargetUsers = Math.min(4, allUniqueUsers.size);
+    const rawGrid = [];
+
+    for (const gt of gridPoints) {
+        let winPts = [];
+        let chosenWinDays = 30;
+        for (const wd of [30, 45, 60, 90, 180, 99999]) {
+            chosenWinDays = wd;
+            winPts = validUD.filter(u => Math.abs(u.ts - gt) <= wd * DAY_MS);
+            const uSet = new Set(winPts.map(u => u.nick));
+            if (uSet.size >= minTargetUsers && winPts.length >= 2) break;
+        }
+        if (winPts.length === 0) winPts = validUD;
+
+        // 윈도우 내 고유 유저별 시간 가중 평균 호가 계산 (1인 독식 방지 캡 적용)
+        const userAcc = new Map();
+        const tau = Math.max(7, chosenWinDays * 0.55);
+        for (const u of winPts) {
+            const dtDays = (u.ts - gt) / DAY_MS;
+            const w = Math.exp(-0.5 * Math.pow(dtDays / tau, 2));
+            if (!userAcc.has(u.nick)) userAcc.set(u.nick, { swp: 0, sw: 0 });
+            const acc = userAcc.get(u.nick);
+            acc.swp += w * u.effPrice;
+            acc.sw += w;
+        }
+
+        const uPrices = [];
+        const uWeights = [];
+        for (const [, acc] of userAcc.entries()) {
+            if (acc.sw > 0) {
+                uPrices.push(acc.swp / acc.sw);
+                uWeights.push(Math.min(acc.sw, 1.5)); // 도배 유저 가중치 상한 캡
+            }
+        }
+
+        const { mid, bid, ask } = bimodalBidAsk(uPrices, uWeights);
+        rawGrid.push({ t: gt, mid, bid, ask, userCount: uPrices.length });
+    }
+
+    // [4단계] 가우시안 커널 스무딩 (시각적 추상화 곡선 완성)
+    const bw = 1.8;
+    const curve = [];
+    for (let i = 0; i < rawGrid.length; i++) {
+        let sw = 0, sMid = 0, sBid = 0, sAsk = 0;
+        for (let j = 0; j < rawGrid.length; j++) {
+            const w = Math.exp(-0.5 * Math.pow((i - j) / bw, 2));
+            sw += w;
+            sMid += w * rawGrid[j].mid;
+            sBid += w * rawGrid[j].bid;
+            sAsk += w * rawGrid[j].ask;
+        }
+        const fMid = sMid / sw;
+        const fBid = Math.min(fMid, sBid / sw);
+        const fAsk = Math.max(fMid, sAsk / sw);
+        curve.push({
+            x: rawGrid[i].t,
+            fair: fMid,
+            bid: fBid,
+            ask: fAsk,
+            userCount: rawGrid[i].userCount
+        });
+    }
+
+    // [5단계] "지금 당장의 시세" (Spot Nowcast) 및 요약 지표 산출
+    const lastNode = curve[curve.length - 1];
+    const spotFair = lastNode.fair;
+    const spotBid = lastNode.bid;
+    const spotAsk = lastNode.ask;
+    const halfSpread = Math.max(0, (spotAsk - spotBid) / 2);
+    const spreadPct = spotFair > 0 ? (halfSpread / spotFair) * 100 : 0;
+
+    // 30일 전 대비 추세 계산
+    const targetPrevT = lastNode.x - 30 * DAY_MS;
+    let prevNode = curve[0];
+    for (const c of curve) {
+        if (Math.abs(c.x - targetPrevT) < Math.abs(prevNode.x - targetPrevT)) {
+            prevNode = c;
+        }
+    }
+    const trendPct = prevNode.fair > 0 ? ((spotFair - prevNode.fair) / prevNode.fair) * 100 : 0;
+
+    const spamRemovedCount = Math.max(0, rawHistory.length - userDays.length);
+    const totalOutlierFixed = hardOutlierRawCount + spikeClampedRawCount;
+
+    return {
+        curve,
+        userDays,
+        validUD,
+        spotFair,
+        spotBid,
+        spotAsk,
+        halfSpread,
+        spreadPct,
+        trendPct,
+        rawCount: rawHistory.length,
+        uniqueUserCount: allUniqueUsers.size,
+        userDayCount: userDays.length,
+        spamRemovedCount,
+        totalOutlierFixed,
+        hardOutlierRawCount,
+        spikeClampedRawCount
+    };
+};
+
+const renderMarketSummaryUI = (analysis) => {
+    if (!analysis) return;
+
+    if (elements.marketSummaryCard) {
+        elements.marketSummaryCard.classList.remove('hidden');
+        elements.marketSummaryCard.innerHTML = `
+            <div class="flex items-baseline gap-2.5 pb-2 border-b border-blue-100/80">
+                <span class="text-xs font-bold text-blue-800 uppercase tracking-tight">적정 시세</span>
+                <span class="text-2xl font-extrabold text-blue-600 tracking-tight">${formatPriceEok(analysis.spotFair)}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2.5 text-center sm:text-left">
+                <div class="bg-white/80 rounded-lg px-2.5 py-1.5 border border-gray-100">
+                    <div class="text-[10px] text-gray-400 font-medium">사요 호가</div>
+                    <div class="text-xs sm:text-sm font-bold text-emerald-600 mt-0.5">${formatPriceEok(analysis.spotBid)}</div>
+                </div>
+                <div class="bg-white/80 rounded-lg px-2.5 py-1.5 border border-gray-100">
+                    <div class="text-[10px] text-gray-400 font-medium">팔아요 호가</div>
+                    <div class="text-xs sm:text-sm font-bold text-rose-600 mt-0.5">${formatPriceEok(analysis.spotAsk)}</div>
+                </div>
+                <div class="bg-white/80 rounded-lg px-2.5 py-1.5 border border-gray-100">
+                    <div class="text-[10px] text-gray-400 font-medium">사요·팔아요 오차범위</div>
+                    <div class="text-xs sm:text-sm font-bold text-gray-800 mt-0.5">±${formatPriceEok(analysis.halfSpread)} <span class="text-[10px] font-normal text-gray-500">(±${analysis.spreadPct.toFixed(1)}%)</span></div>
+                </div>
+            </div>
+        `;
+    }
+};
+
 const loadDataAndRender = (history, count) => {
     try {
         currentChartData = history;
-        // Update Stats (using last item price)
-        const lastPrice = history.length > 0 ? history[history.length - 1].price : 0;
-        // statPrice update removed
-        // REMOVED statFreq update
-
+        currentAnalysis = computeMarketAnalysis(history);
+        renderMarketSummaryUI(currentAnalysis);
         updateChart();
     } catch (e) {
         console.error(e);
@@ -705,103 +999,219 @@ const loadDataAndRender = (history, count) => {
     }
 };
 
+// ★ 커서 떨림 방지 & 적정 시세 단일 타겟팅 커스텀 인터랙션 모드
+if (typeof Chart !== 'undefined' && Chart.Interaction && Chart.Interaction.modes) {
+    Chart.Interaction.modes.fairPriceOnly = function (chart, e) {
+        const pos = Chart.helpers && Chart.helpers.getRelativePosition
+            ? Chart.helpers.getRelativePosition(e, chart)
+            : (e.x !== undefined ? { x: e.x, y: e.y } : { x: 0, y: 0 });
+
+        if (chart.chartArea) {
+            if (pos.x < chart.chartArea.left || pos.x > chart.chartArea.right ||
+                pos.y < chart.chartArea.top || pos.y > chart.chartArea.bottom) {
+                return [];
+            }
+        }
+
+        const meta = chart.getDatasetMeta(0); // dataset 0: '적정 시세'
+        if (!meta || meta.hidden || !meta.data || meta.data.length === 0) return [];
+
+        let nearestDist = Infinity;
+        let nearestIdx = -1;
+        for (let i = 0; i < meta.data.length; i++) {
+            const el = meta.data[i];
+            const dist = Math.abs(el.x - pos.x);
+            if (dist < nearestDist) {
+                nearestDist = dist;
+                nearestIdx = i;
+            }
+        }
+
+        if (nearestIdx !== -1) {
+            return [{ element: meta.data[nearestIdx], datasetIndex: 0, index: nearestIdx }];
+        }
+        return [];
+    };
+}
+
 const updateChart = () => {
     try {
         if (!elements.chartCanvas || typeof Chart === 'undefined') return;
         if (elements.chartPlaceholder) elements.chartPlaceholder.classList.add('hidden');
         if (priceChart) priceChart.destroy();
-        
-        console.log(`Rendering Chart: Range=${currentChartRange}, YScale=${currentYScale}`);
 
-        // 1. Filter Data by Range
-        let filteredData = [...currentChartData];
-        if (currentChartRange === '3m') {
-            const threeMonthsAgo = new Date();
-            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-            filteredData = filteredData.filter(d => d.isoDate >= threeMonthsAgo);
+        if (!currentChartData || currentChartData.length === 0) return;
+        if (!currentAnalysis) {
+            currentAnalysis = computeMarketAnalysis(currentChartData);
+            renderMarketSummaryUI(currentAnalysis);
         }
-        filteredData.sort((a, b) => a.isoDate - b.isoDate);
 
         const now = new Date();
         const todayTime = now.getTime();
+        const latestDataTime = currentChartData[currentChartData.length - 1].isoDate.getTime();
+        const refEndTime = Math.max(todayTime, latestDataTime);
 
-        const displayData = [];
-        // Calculate a small epsilon based on the range (0.2% of range)
-        const firstT = filteredData.length > 0 ? filteredData[0].isoDate.getTime() : todayTime;
-        const range = todayTime - firstT;
-        const eps = range > 0 ? range * 0.002 : 1000 * 60 * 30; // default 30min if no range
-
-        for (let i = 0; i < filteredData.length; i++) {
-            const t = filteredData[i].isoDate.getTime();
-            const p = filteredData[i].price;
-            // Create a tiny horizontal segment to represent the "point"
-            // Use groupId to distinguish between "within point" and "between points"
-            displayData.push({ x: t - eps, y: p, groupId: i });
-            displayData.push({ x: t + eps, y: p, groupId: i });
+        let cutoffTime = 0;
+        if (currentChartRange === '3m') {
+            const d3m = new Date(latestDataTime);
+            d3m.setMonth(d3m.getMonth() - 3);
+            cutoffTime = d3m.getTime();
         }
 
-        // 마지막 거래 이후 선 끊기
-        const lastDataTime = displayData.length > 0 ? displayData[displayData.length - 1].x : todayTime;
-        if (displayData.length > 0 && todayTime > lastDataTime) {
-            displayData.push({ x: lastDataTime + 1, y: null });
+        // 1. Raw Data (기존 빨간 선용)
+        const filteredRaw = currentChartData.filter(d => d.isoDate.getTime() >= cutoffTime);
+        const firstT = filteredRaw.length > 0 ? filteredRaw[0].isoDate.getTime() : refEndTime;
+        const range = refEndTime - firstT;
+        const eps = range > 0 ? range * 0.002 : 1000 * 60 * 30;
+
+        const rawDisplayData = [];
+        for (let i = 0; i < filteredRaw.length; i++) {
+            const t = filteredRaw[i].isoDate.getTime();
+            const p = filteredRaw[i].price;
+            rawDisplayData.push({ x: t - eps, y: p, groupId: i });
+            rawDisplayData.push({ x: t + eps, y: p, groupId: i });
+        }
+        const lastRawTime = rawDisplayData.length > 0 ? rawDisplayData[rawDisplayData.length - 1].x : refEndTime;
+        if (rawDisplayData.length > 0 && refEndTime > lastRawTime) {
+            rawDisplayData.push({ x: lastRawTime + 1, y: null });
         }
 
-        // 3개월 단위 틱 생성 (25.3, 25.6, 25.9, 25.12 ...)
+        // 2. Smoothed Blue Curve & Bid-Ask Band Data
+        const visibleCurve = currentAnalysis.curve;
+        const fairCurvePoints = visibleCurve.map(c => ({ x: c.x, y: c.fair, bid: c.bid, ask: c.ask }));
+        const askBandPoints = visibleCurve.map(c => ({ x: c.x, y: c.ask }));
+        const bidBandPoints = visibleCurve.map(c => ({ x: c.x, y: c.bid }));
+
+        // 정제된 일일 호가 점 (배경) - 마우스 이벤트 무시(떨림 방지)
+        const cleanScatterPoints = currentAnalysis.validUD
+            .filter(u => u.status === 'normal')
+            .map(u => ({ x: u.ts, y: u.price }));
+
+        // X축 범위 및 틱 생성
         const fixedStartTime = new Date(2025, 1, 12).getTime();
-        const firstTime = displayData.length > 0 ? Math.min(displayData[0].x, fixedStartTime) : fixedStartTime;
-        const firstDate = new Date(fixedStartTime);
+        const xMin = fixedStartTime;
+        const firstDate = new Date(xMin);
         const quarterTicks = [];
         let tickYear = firstDate.getFullYear();
-        let tickMonth = firstDate.getMonth(); // 2월 12일부터 시작하므로 월 그대로 사용
+        let tickMonth = firstDate.getMonth();
+        const tickStepMonths = 3;
+
         while (true) {
             const tickDate = new Date(tickYear, tickMonth, 1);
             const tickTime = tickDate.getTime();
-            if (tickTime > todayTime) break;
-            if (tickTime >= firstTime) {
+            if (tickTime > refEndTime) break;
+            if (tickTime >= xMin) {
                 quarterTicks.push(tickTime);
             }
-            tickMonth += 3;
+            tickMonth += tickStepMonths;
             if (tickMonth >= 12) {
                 tickMonth -= 12;
                 tickYear++;
             }
         }
 
+        const datasets = [
+            {
+                label: '적정 시세',
+                data: fairCurvePoints,
+                borderColor: '#2563eb',
+                backgroundColor: '#2563eb',
+                borderWidth: 3.5,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: '#2563eb',
+                pointHoverBorderColor: '#ffffff',
+                pointHoverBorderWidth: 2,
+                pointHitRadius: 20,
+                tension: 0.3,
+                cubicInterpolationMode: 'monotone',
+                fill: false,
+                order: 1
+            },
+            {
+                label: '팔아요 호가',
+                data: askBandPoints,
+                borderColor: 'rgba(59, 130, 246, 0.30)',
+                backgroundColor: 'rgba(59, 130, 246, 0.10)',
+                borderWidth: 1.2,
+                borderDash: [4, 4],
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                pointHitRadius: 0,
+                tension: 0.3,
+                cubicInterpolationMode: 'monotone',
+                fill: '+1',
+                order: 2
+            },
+            {
+                label: '사요 호가',
+                data: bidBandPoints,
+                borderColor: 'rgba(16, 185, 129, 0.35)',
+                backgroundColor: 'rgba(59, 130, 246, 0.10)',
+                borderWidth: 1.2,
+                borderDash: [4, 4],
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                pointHitRadius: 0,
+                tension: 0.3,
+                cubicInterpolationMode: 'monotone',
+                fill: false,
+                order: 3
+            },
+            {
+                label: '거래 데이터',
+                data: cleanScatterPoints,
+                type: 'scatter',
+                backgroundColor: 'rgba(148, 163, 184, 0.28)',
+                borderColor: 'rgba(100, 116, 139, 0.35)',
+                borderWidth: 1,
+                pointRadius: 2.0,
+                pointHoverRadius: 0,
+                pointHitRadius: 0,
+                order: 4
+            }
+        ];
+
         const ctx = elements.chartCanvas.getContext('2d');
 
         priceChart = new Chart(ctx, {
             type: 'line',
-            data: {
-                datasets: [{
-                    label: '시세 (억)',
-                    data: displayData,
-                    borderColor: '#ef4444',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    pointHoverRadius: 6,
-                    segment: {
-                        borderColor: ctx => (ctx.p0.raw && ctx.p1.raw && ctx.p0.raw.groupId === ctx.p1.raw.groupId) ? '#3b82f6' : '#ef4444',
-                        borderWidth: ctx => (ctx.p0.raw && ctx.p1.raw && ctx.p0.raw.groupId === ctx.p1.raw.groupId) ? 3 : 1.5
-                    },
-                    tension: 0.3,
-                    fill: false,
-                    spanGaps: false
-                }]
-            },
+            data: { datasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            boxWidth: 12,
+                            boxHeight: 3,
+                            usePointStyle: false,
+                            font: { size: 11 },
+                            color: '#4b5563'
+                        }
+                    },
                     tooltip: {
+                        enabled: true,
+                        displayColors: false,
+                        animation: { duration: 80 },
+                        padding: 8,
+                        backgroundColor: 'rgba(15, 23, 42, 0.90)',
+                        titleColor: '#94a3b8',
+                        titleFont: { size: 11, weight: '500' },
+                        bodyColor: '#ffffff',
+                        bodyFont: { size: 13, weight: '700' },
                         callbacks: {
                             title: function (context) {
+                                if (!context || context.length === 0) return '';
                                 const d = new Date(context[0].parsed.x);
                                 return d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate();
                             },
                             label: function (context) {
-                                if (context.parsed.y === null) return '';
-                                return context.parsed.y.toFixed(1) + '억';
+                                if (context.parsed.y === null || context.parsed.y === undefined) return '';
+                                return `적정 시세: ${formatPriceEok(context.parsed.y)}`;
                             }
                         }
                     }
@@ -810,10 +1220,12 @@ const updateChart = () => {
                     x: {
                         type: 'linear',
                         display: true,
-                        min: fixedStartTime,
-                        max: todayTime,
+                        min: xMin,
+                        max: refEndTime,
                         afterBuildTicks: function (axis) {
-                            axis.ticks = quarterTicks.map(t => ({ value: t }));
+                            if (quarterTicks.length > 0) {
+                                axis.ticks = quarterTicks.map(t => ({ value: t }));
+                            }
                         },
                         ticks: {
                             color: '#6b7280',
@@ -832,7 +1244,8 @@ const updateChart = () => {
                         }
                     },
                     y: {
-                        beginAtZero: currentYScale === 'normal',
+                        beginAtZero: true,
+                        grace: '5%',
                         grid: { color: '#e5e7eb' },
                         ticks: {
                             color: '#6b7280',
@@ -843,7 +1256,12 @@ const updateChart = () => {
                     }
                 },
                 interaction: {
-                    mode: 'nearest',
+                    mode: 'fairPriceOnly',
+                    intersect: false,
+                    axis: 'x'
+                },
+                hover: {
+                    mode: 'fairPriceOnly',
                     intersect: false,
                     axis: 'x'
                 }
@@ -855,3 +1273,4 @@ const updateChart = () => {
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
