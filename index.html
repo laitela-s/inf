@@ -137,20 +137,27 @@
             id="modal-content">
 
             <!-- Modal Header -->
-            <div class="p-6 border-b border-gray-100 flex justify-between items-start bg-gray-50">
-                <div>
-                    <h3 class="text-2xl font-bold text-gray-900 flex items-center gap-3" id="modal-title">
-                        ITEM NAME
-                        <span class="text-sm px-2 py-1 rounded bg-gray-200 text-gray-700 font-normal"
-                            id="modal-subtitle">SUB INFO</span>
-                    </h3>
+            <div class="p-4 md:p-6 border-b border-gray-100 bg-gray-50">
+                <div class="flex justify-between items-start gap-3">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2" id="modal-title-row">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900 truncate" id="modal-title">
+                                ITEM NAME
+                            </h3>
+                            <span class="text-xs md:text-sm px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold"
+                                id="modal-subtitle">SUB INFO</span>
+                        </div>
+                        <div id="modal-equip-badges" class="flex flex-wrap items-center gap-1.5 mt-1.5"></div>
+                    </div>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-900 transition flex items-center justify-center rounded-full hover:bg-gray-200 p-1 flex-shrink-0">
+                        <svg class="w-7 h-7 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                            </path>
+                        </svg>
+                    </button>
                 </div>
-                <button id="close-modal" class="text-gray-400 hover:text-gray-900 transition flex items-center justify-center rounded-full hover:bg-gray-200 p-1">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
+                <!-- Expandable Equipment & Option Detail Drawer -->
+                <div id="equip-detail-drawer" class="mt-2.5 hidden"></div>
             </div>
 
             <!-- Modal Body -->
@@ -170,14 +177,18 @@
                     </div>
                 </div>
 
-                <!-- Right: Chart & Stats -->
-                <div id="chart-section" class="w-full lg:w-1/2 p-4 md:p-6 flex flex-col bg-white flex-shrink-0 lg:flex-shrink">
+                <!-- Right: Chart & Stats & Enhancement Optimizer -->
+                <div id="chart-section" class="w-full lg:w-1/2 p-4 md:p-6 flex flex-col bg-white flex-shrink-0 lg:flex-shrink lg:overflow-y-auto">
                     <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
                         <h4 class="text-sm font-bold text-gray-600 uppercase tracking-wider">시세 변동 기록</h4>
                     </div>
 
                     <!-- Real-time Fair Market Value Briefing Card -->
                     <div id="market-summary-card" class="hidden mb-3 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-white p-3.5 shadow-sm">
+                    </div>
+
+                    <!-- Non-Monte-Carlo Enhancement Expected Value & Optimal Protection Card -->
+                    <div id="enhance-sim-card" class="hidden mb-3 rounded-xl border border-indigo-200 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-slate-100 p-4 shadow-md">
                     </div>
 
                     <!-- Chart Area -->
