@@ -187,11 +187,7 @@
                     <div id="market-summary-card" class="hidden mb-3 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-white p-3.5 shadow-sm">
                     </div>
 
-                    <!-- Non-Monte-Carlo Enhancement Expected Value & Optimal Protection Card -->
-                    <div id="enhance-sim-card" class="hidden mb-3 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-white p-3.5 shadow-sm">
-                    </div>
-
-                    <!-- Chart Area -->
+                    <!-- Chart Area (위) -->
                     <div class="flex-1 bg-white rounded-lg p-2 md:p-4 relative min-h-[260px] md:min-h-[300px] border border-gray-100 shadow-sm">
                         <canvas id="priceChart"></canvas>
                         <div id="chart-placeholder"
@@ -199,13 +195,17 @@
                             위 시세표의 옵션/스펙을 터치하여 상세 기록을 확인하세요
                         </div>
                     </div>
+
+                    <!-- Enhancement Expected Value & Optimal Protection Card (아래) -->
+                    <div id="enhance-sim-card" class="hidden mt-3 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-white p-3.5 shadow-sm">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="data.js" onerror=""></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=20261027_3"></script>
 </body>
 
 </html>

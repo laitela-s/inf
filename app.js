@@ -829,22 +829,14 @@ const optimizeEnhancementExact = ({ l, d, e, u, s7, s8, s9, s10, reaEok, stone39
     return bestCfg;
 };
 
-// 정렬 알고리즘: 빈도순(거래량순) vs ㄱㄴㄷ순(한국어 가나다순 - 정식 명칭 기준)
+// 정렬 알고리즘: 빈도순(거래량순) vs ㄱㄴㄷ순(한국어 가나다순 - 줄임말 기준)
 const sortItemsOrVariants = (list, mode = currentSortMode) => {
     if (!Array.isArray(list)) return [];
     if (mode === 'korean') {
-        return list.slice().sort((a, b) => {
-            const labelA = a.displayName || a.name;
-            const labelB = b.displayName || b.name;
-            return labelA.localeCompare(labelB, 'ko', { numeric: true });
-        });
+        return list.slice().sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true }));
     }
     // 기본값: 빈도순 (거래 건수 내림차순, 동률 시 가나다순)
-    return list.slice().sort((a, b) => {
-        const labelA = a.displayName || a.name;
-        const labelB = b.displayName || b.name;
-        return (b.count - a.count) || labelA.localeCompare(labelB, 'ko', { numeric: true });
-    });
+    return list.slice().sort((a, b) => (b.count - a.count) || a.name.localeCompare(b.name, 'ko', { numeric: true }));
 };
 
 const updateSortUI = () => {
@@ -1504,9 +1496,9 @@ const renderGrid = (filterText = '') => {
                         <span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-bold">Lv.${m.level} · ${m.part}</span>
                         <div class="flex flex-wrap gap-1 justify-end">${attrBadges.join('')}</div>
                     </div>
-                    <h3 class="text-base md:text-lg font-extrabold text-gray-900 leading-snug break-keep">${m.officialName}</h3>
-                    <div class="mt-1.5 flex items-center justify-between gap-2">
-                        <span class="text-xs text-gray-500 truncate">줄임말: <strong class="text-gray-700 font-semibold">${m.abbr}</strong></span>
+                    <h3 class="text-lg md:text-xl font-extrabold text-gray-900 leading-snug break-keep">${item.name}</h3>
+                    <div class="mt-1 flex items-center justify-between gap-2">
+                        <span class="text-xs text-gray-500 truncate">${m.officialName}</span>
                         <button type="button" class="card-detail-toggle-btn text-[11px] text-blue-600 hover:text-blue-800 font-semibold whitespace-nowrap px-1.5 py-0.5 rounded hover:bg-blue-50 transition">
                             상세정보 ▾
                         </button>
@@ -1534,7 +1526,7 @@ const renderGrid = (filterText = '') => {
         } else {
             card.innerHTML = `
                 <div>
-                    <h3 class="text-lg font-bold text-gray-900">${item.displayName}</h3>
+                    <h3 class="text-lg font-bold text-gray-900">${item.name}</h3>
                 </div>
             `;
         }
@@ -1584,12 +1576,11 @@ const renderModalHeaderDetails = (item, selectedVariant = null) => {
     const optMeta = selectedVariant?.optMeta || null;
 
     elements.modalEquipBadges.innerHTML = `
-        <span class="px-2 py-0.5 rounded bg-gray-200/80 text-gray-700 text-xs font-semibold">줄임말: ${m.abbr}</span>
-        <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-bold">렙제 Lv.${m.level}</span>
-        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-medium">${m.subType} · ${m.part}</span>
-        ${m.isSturdy ? `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-bold">튼튼한 장비</span>` : ''}
-        ${m.isSwift ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">신속한 장비</span>` : ''}
-        ${m.isCoupon ? `<span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800 text-xs font-bold">쿠폰 교환 세트장비</span>` : ''}
+        <span class="text-xs text-gray-600 font-medium">${m.officialName}</span>
+        <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-bold">Lv.${m.level} · ${m.part}</span>
+        ${m.isSturdy ? `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-bold">튼튼</span>` : ''}
+        ${m.isSwift ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">신속</span>` : ''}
+        ${m.isCoupon ? `<span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800 text-xs font-bold">쿠폰장비</span>` : ''}
         <button type="button" id="modal-detail-drawer-toggle" class="ml-auto px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold shadow-2xs transition flex items-center gap-1">
             <span>📖 장비${optMeta ? '·옵션' : ''} 세부정보 열기</span>
             <span id="modal-detail-drawer-arrow">▾</span>
@@ -1602,8 +1593,8 @@ const renderModalHeaderDetails = (item, selectedVariant = null) => {
         optDetailHtml = `
             <div class="mt-3 pt-3 border-t border-blue-200/60">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                    <div class="text-xs font-extrabold text-indigo-900">✨ 선택된 옵션 정식 명칭: <span class="text-blue-700">${optMeta.officialName}</span></div>
-                    <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 text-[11px] font-bold">옵션 줄임말: ${optMeta.abbr}</span>
+                    <div class="text-xs font-extrabold text-indigo-900">✨ 옵션 줄임말: <span class="text-blue-700">${optMeta.abbr}</span></div>
+                    <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 text-[11px] font-bold">${optMeta.officialName}</span>
                 </div>
                 <p class="text-xs text-gray-700 mb-2">${optMeta.desc}</p>
                 ${st ? `
@@ -1629,15 +1620,14 @@ const renderModalHeaderDetails = (item, selectedVariant = null) => {
             </div>
         `;
     } else {
-        // 옵션 선택 전에는 해당 장비에 등장하는 모든 옵션의 줄임말/정식명칭 요약 도감 표시
         const allVarRows = Object.values(item.variants).map(v => {
             const om = v.optMeta || getOptionMeta(v.name, m);
             const stText = om.stages ? `5강 ${om.stages[5]} / 7강 ${om.stages[7]} / 9강 ${om.stages[9]} / 10강 ${om.stages[10]}` : om.desc;
             return `
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-1.5 border-b border-gray-100 last:border-b-0 text-xs">
                     <div>
-                        <span class="font-bold text-gray-900">${om.officialName}</span>
-                        <span class="ml-1.5 px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-semibold">줄임말: ${v.name}</span>
+                        <span class="font-bold text-gray-900">${v.name}</span>
+                        <span class="ml-1.5 text-[11px] text-gray-500">${om.officialName}</span>
                     </div>
                     <div class="text-[11px] text-blue-700 font-medium">${stText}</div>
                 </div>
@@ -1657,8 +1647,8 @@ const renderModalHeaderDetails = (item, selectedVariant = null) => {
     elements.equipDetailDrawer.innerHTML = `
         <div class="rounded-xl bg-blue-50/70 border border-blue-200 p-3.5 text-xs text-gray-700 shadow-inner">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div><span class="text-gray-400 font-medium">정식 명칭:</span> <strong class="text-gray-900">${m.officialName}</strong></div>
                 <div><span class="text-gray-400 font-medium">장비 줄임말:</span> <strong class="text-blue-700">${m.abbr}</strong></div>
+                <div><span class="text-gray-400 font-medium">정식 명칭:</span> <strong class="text-gray-900">${m.officialName}</strong></div>
                 <div><span class="text-gray-400 font-medium">착용 레벨(렙제):</span> <strong class="text-gray-900">${m.level}레벨</strong> (강화 골드 비용 기준)</div>
                 <div><span class="text-gray-400 font-medium">장비 분류/부위:</span> <strong class="text-gray-900">${m.subType} · ${m.part}</strong></div>
             </div>
@@ -1685,7 +1675,7 @@ const openModal = (item) => {
         currentModalVariant = null;
         currentSelectedCell = null;
 
-        elements.modalTitle.textContent = item.displayName || item.name;
+        elements.modalTitle.textContent = item.name;
         elements.modalSubtitle.textContent = item.category === 'equip' ? '옵션 선택' : '등급 선택';
         if (elements.equipDetailDrawer) elements.equipDetailDrawer.classList.add('hidden');
 
@@ -1746,26 +1736,22 @@ const renderVariantList = (item) => {
     const variants = sortItemsOrVariants(Object.values(item.variants), currentSortMode);
 
     const list = document.createElement('div');
-    list.className = "grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-1";
+    list.className = "grid grid-cols-2 gap-2.5 p-1";
 
     variants.forEach(v => {
         const btn = document.createElement('button');
-        btn.className = "p-3 bg-white hover:bg-blue-50 rounded-xl shadow-xs text-left border border-gray-200 hover:border-blue-400 flex flex-col justify-between transition group";
+        btn.className = "p-3 bg-white hover:bg-blue-50 rounded-xl shadow-xs text-center border border-gray-200 hover:border-blue-400 flex flex-col items-center justify-center transition group";
 
         if (item.category === 'equip' && v.optMeta) {
             const om = v.optMeta;
-            const stagePreview = om.stages ? `5강 ${om.stages[5]} → 10강 ${om.stages[10]}` : om.desc;
             btn.innerHTML = `
-                <div class="w-full flex items-start justify-between gap-1.5">
-                    <span class="text-gray-900 font-extrabold text-sm group-hover:text-blue-700 break-keep">${om.officialName}</span>
-                    <span class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-semibold whitespace-nowrap flex-shrink-0">약칭: ${v.name}</span>
-                </div>
-                <div class="mt-1.5 text-[11px] text-gray-500 truncate w-full">${stagePreview}</div>
+                <div class="text-gray-900 font-extrabold text-sm sm:text-base group-hover:text-blue-700">${v.name}</div>
+                <div class="mt-0.5 text-[11px] text-gray-500 break-keep leading-tight">${om.officialName}</div>
             `;
         } else {
             btn.innerHTML = `
                 <div class="text-gray-900 font-bold text-sm text-center w-full">
-                    ${v.displayName || v.name}
+                    ${v.name}
                 </div>
             `;
         }
@@ -1786,8 +1772,7 @@ const selectVariant = (item, variant) => {
     currentModalVariant = variant;
     currentSelectedCell = null;
 
-    const optLabel = variant.optMeta ? `${variant.optMeta.officialName} (약칭: ${variant.name})` : variant.name;
-    elements.modalSubtitle.textContent = optLabel;
+    elements.modalSubtitle.textContent = variant.name;
     renderModalHeaderDetails(item, variant);
 
     const container = elements.matrixContainer;
@@ -1812,7 +1797,7 @@ const selectVariant = (item, variant) => {
     header.appendChild(backBtn);
     container.appendChild(header);
 
-    // 옵션 상세 효과 카드 (접기/펼치기 가능, 기본 펼침 요약)
+    // 옵션 상세 효과 카드 (줄임말 크게, 풀네임 작게 아래에 + 단계별 수치 열기)
     if (item.category === 'equip' && variant.optMeta) {
         const om = variant.optMeta;
         const m = item.equipMeta;
@@ -1820,8 +1805,9 @@ const selectVariant = (item, variant) => {
         optInfoBox.className = "mb-3 rounded-xl bg-indigo-50/60 border border-indigo-100 p-3 text-xs";
         optInfoBox.innerHTML = `
             <div class="flex items-center justify-between gap-2">
-                <div class="font-bold text-indigo-950 truncate">
-                    ✨ ${om.officialName} <span class="text-indigo-600 font-normal">(약칭: ${variant.name})</span>
+                <div class="min-w-0">
+                    <div class="text-sm font-extrabold text-indigo-950">${variant.name}</div>
+                    <div class="text-[11px] text-gray-500 truncate mt-0.5">${om.officialName}</div>
                 </div>
                 <button type="button" class="opt-stage-toggle text-[11px] text-indigo-600 hover:text-indigo-800 font-bold whitespace-nowrap">
                     단계별 수치 ▾
