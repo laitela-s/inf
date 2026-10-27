@@ -1858,8 +1858,7 @@ const selectVariant = (item, variant) => {
         if (priceChart) { priceChart.destroy(); priceChart = null; }
         if (elements.chartPlaceholder) elements.chartPlaceholder.classList.remove('hidden');
         if (elements.marketSummaryCard) elements.marketSummaryCard.classList.add('hidden');
-        // 옵션 진입 시 기본 강화 기대수익 계산기 렌더링 (기본 7강/내구10 또는 첫 번째 강화가능 셀 기준)
-        renderEnhancementSimulatorUI(item, variant, null);
+        if (elements.enhanceSimCard) elements.enhanceSimCard.classList.add('hidden');
     } else {
         if (elements.enhanceSimCard) elements.enhanceSimCard.classList.add('hidden');
         const info = document.createElement('div');
@@ -1899,12 +1898,10 @@ const renderMatrix = (item, variant, container) => {
         const d = variant.matrix[k];
         const [e, dur] = k.split('_').map(Number);
         const cell = document.createElement('div');
-        const isEnhanceable = (e >= 5 && e <= 9 && dur > e);
 
-        cell.className = "matrix-choice-cell bg-white p-2 rounded shadow-sm text-center cursor-pointer border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition flex flex-col items-center justify-center min-h-[54px] relative";
+        cell.className = "matrix-choice-cell bg-white p-2 rounded shadow-sm text-center cursor-pointer border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition flex flex-col items-center justify-center min-h-[50px]";
         cell.innerHTML = `
             <div class="text-sm font-bold text-gray-900">${e}/${dur}</div>
-            ${isEnhanceable ? `<span class="text-[9px] text-indigo-600 font-semibold mt-0.5">강화가능</span>` : `<span class="text-[9px] text-gray-400 mt-0.5">${e === 10 ? '완성작' : '마감작'}</span>`}
         `;
         cell.onclick = () => {
             const allCells = grid.querySelectorAll('.matrix-choice-cell');
@@ -1936,267 +1933,99 @@ const renderMatrix = (item, variant, container) => {
 const renderEnhancementSimulatorUI = (item, variant, selectedCell = null) => {
     const card = elements.enhanceSimCard;
     if (!card) return;
-    if (!item || item.category !== 'equip' || !variant || variant.name === '무') {
+
+    // 무옵션이거나, 선택된 셀이 없거나, 강화 불가능한 셀(10강 완성작 또는 내구도 <= 강화단계 마감작)이면 숨김
+    if (
+        !item ||
+        item.category !== 'equip' ||
+        !variant ||
+        variant.name === '무' ||
+        !selectedCell ||
+        selectedCell.enc < 5 ||
+        selectedCell.enc > 9 ||
+        selectedCell.dur <= selectedCell.enc
+    ) {
         card.classList.add('hidden');
         return;
     }
 
-    card.classList.remove('hidden');
     const equipMeta = item.equipMeta || getEquipMeta(item.name);
-    const optMeta = variant.optMeta || getOptionMeta(variant.name, equipMeta);
+    const l = selectedCell.enc;
+    const d = selectedCell.dur;
+    const e = equipMeta.level;
+    const u = equipMeta.isSturdy;
 
     // 10강(10/10), 9강(9/9), 8강(8/8), 7강(7/7) 시세 자동 추출 (3건 미만 셀 폴백 허용)
-    const p10Info = getVariantCellSpotPrice(variant, '10_10', true);
-    const p9Info = getVariantCellSpotPrice(variant, '9_9', true);
-    const p8Info = getVariantCellSpotPrice(variant, '8_8', true);
-    const p7Info = getVariantCellSpotPrice(variant, '7_7', true);
+    const s10 = getVariantCellSpotPrice(variant, '10_10', true).price;
+    const s9 = getVariantCellSpotPrice(variant, '9_9', true).price;
+    const s8 = getVariantCellSpotPrice(variant, '8_8', true).price;
+    const s7 = getVariantCellSpotPrice(variant, '7_7', true).price;
 
-    // 시작 강화단계 / 내구도 결정: 클릭된 셀이 강화 가능(5<=enc<=9 && dur>enc)하면 그 셀 사용, 아니면 첫 강화가능 셀 또는 기본 7/10
-    let initEnc = 7;
-    let initDur = 10;
-    let selectedSpotFair = 0;
-    let isCellEnhanceable = false;
-
-    if (selectedCell && selectedCell.enc >= 5 && selectedCell.enc <= 9 && selectedCell.dur > selectedCell.enc) {
-        initEnc = selectedCell.enc;
-        initDur = selectedCell.dur;
-        selectedSpotFair = selectedCell.spotFair || 0;
-        isCellEnhanceable = true;
-    } else {
-        // variant 내 강화 가능한 셀 중 가장 거래가 많은 셀 탐색
-        const enhKeys = Object.keys(variant.matrix || {}).filter(k => {
-            const [e, d] = k.split('_').map(Number);
-            return e >= 5 && e <= 9 && d > e;
-        });
-        if (enhKeys.length > 0) {
-            enhKeys.sort((a, b) => (variant.matrix[b].count || 0) - (variant.matrix[a].count || 0));
-            const [be, bd] = enhKeys[0].split('_').map(Number);
-            initEnc = be;
-            initDur = bd;
-            const spInfo = getVariantCellSpotPrice(variant, enhKeys[0], true);
-            selectedSpotFair = spInfo.price || 0;
-        }
-    }
-
-    const priceBadge = (info) => {
-        if (info.source === 'valid') return `<span class="text-[9px] text-emerald-400">실제시세(${info.count}건)</span>`;
-        if (info.source === 'under3') return `<span class="text-[9px] text-amber-400">소수표본(${info.count}건)</span>`;
-        return `<span class="text-[9px] text-rose-400">데이터없음(0억)</span>`;
-    };
-
-    card.innerHTML = `
-        <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-700/80">
-            <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 rounded bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-[11px] font-extrabold">비-몬테카를로 수식 엔진</span>
-                <h5 class="text-sm font-extrabold text-white tracking-tight">⚡ 강화 최적 보호제 구간 & 기대수익(EV)</h5>
-            </div>
-            <button type="button" id="enh-sim-params-toggle" class="text-[11px] text-indigo-300 hover:text-white font-semibold px-2 py-0.5 rounded bg-slate-800 border border-slate-600 transition">
-                변수 설정 / 시세 조정 ▾
-            </button>
-        </div>
-
-        <!-- 현재 평가 대상 상태 표시 및 빠른 단계/내구 변경 바 -->
-        <div class="mt-2.5 flex flex-wrap items-center justify-between gap-2 bg-slate-800/90 rounded-lg px-3 py-2 border border-slate-700 text-xs">
-            <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-slate-400">강화 시작 스펙:</span>
-                <select id="enh-input-l" class="bg-slate-900 text-white font-bold border border-slate-600 rounded px-2 py-1 text-xs outline-none focus:border-indigo-400">
-                    ${[5, 6, 7, 8, 9].map(v => `<option value="${v}" ${v === initEnc ? 'selected' : ''}>${v}강</option>`).join('')}
-                </select>
-                <span class="text-slate-500">/</span>
-                <span class="text-slate-400">내구</span>
-                <input id="enh-input-d" type="number" min="6" max="20" value="${initDur}" class="w-14 bg-slate-900 text-white font-bold border border-slate-600 rounded px-2 py-1 text-xs text-center outline-none focus:border-indigo-400">
-                <span class="text-[11px] text-slate-400">(Lv.${equipMeta.level} · ${equipMeta.isSturdy ? '튼튼O' : '튼튼X'})</span>
-            </div>
-            <div id="enh-current-cell-tag" class="text-[11px] text-slate-300">
-                ${selectedSpotFair > 0 ? `현재셀 적정가: <strong class="text-sky-300">${formatPriceEok(selectedSpotFair)}</strong>` : '시세표에서 강화할 셀을 클릭하거나 직접 선택하세요'}
-            </div>
-        </div>
-
-        <!-- 접기/펼치기 가능한 n-변수 상세 입력 패널 -->
-        <div id="enh-sim-params-panel" class="hidden mt-2.5 p-3 rounded-lg bg-slate-950/80 border border-slate-700/80 text-xs space-y-2.5">
-            <div class="text-[11px] text-slate-400 font-medium">
-                📌 확정된 장비·옵션(<strong class="text-white">${equipMeta.officialName} - ${optMeta.officialName}</strong>)의 7~10강 적정 시세와 강레 시세를 자동으로 불러왔습니다. 값을 수정하면 즉시 재계산됩니다.
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div>
-                    <div class="flex justify-between text-[10px] text-slate-400 mb-0.5"><span>10강(10/10) 억</span>${priceBadge(p10Info)}</div>
-                    <input id="enh-input-s10" type="number" step="0.1" value="${p10Info.price}" class="w-full bg-slate-900 text-white font-bold border border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-400">
-                </div>
-                <div>
-                    <div class="flex justify-between text-[10px] text-slate-400 mb-0.5"><span>9강(9/9) 억</span>${priceBadge(p9Info)}</div>
-                    <input id="enh-input-s9" type="number" step="0.1" value="${p9Info.price}" class="w-full bg-slate-900 text-white font-bold border border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-400">
-                </div>
-                <div>
-                    <div class="flex justify-between text-[10px] text-slate-400 mb-0.5"><span>8강(8/8) 억</span>${priceBadge(p8Info)}</div>
-                    <input id="enh-input-s8" type="number" step="0.1" value="${p8Info.price}" class="w-full bg-slate-900 text-white font-bold border border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-400">
-                </div>
-                <div>
-                    <div class="flex justify-between text-[10px] text-slate-400 mb-0.5"><span>7강(7/7) 억</span>${priceBadge(p7Info)}</div>
-                    <input id="enh-input-s7" type="number" step="0.1" value="${p7Info.price}" class="w-full bg-slate-900 text-white font-bold border border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-400">
-                </div>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-800">
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-0.5">강레 1개 가격(억)</label>
-                    <input id="enh-input-rea" type="number" step="0.001" value="${GLOBAL_REA_PRICE_EOK}" class="w-full bg-slate-900 text-amber-300 font-bold border border-slate-700 rounded px-2 py-1 text-xs outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-0.5">강화석 396개(억)</label>
-                    <input id="enh-input-stone" type="number" step="0.05" value="${FIXED_STONE_396_EOK}" class="w-full bg-slate-900 text-slate-200 font-bold border border-slate-700 rounded px-2 py-1 text-xs outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-0.5">장비 렙제</label>
-                    <input id="enh-input-lvl" type="number" value="${equipMeta.level}" class="w-full bg-slate-900 text-slate-200 font-bold border border-slate-700 rounded px-2 py-1 text-xs outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-0.5">튼튼 여부</label>
-                    <select id="enh-input-sturdy" class="w-full bg-slate-900 text-slate-200 font-bold border border-slate-700 rounded px-2 py-1 text-xs outline-none">
-                        <option value="1" ${equipMeta.isSturdy ? 'selected' : ''}>예 (튼튼)</option>
-                        <option value="0" ${!equipMeta.isSturdy ? 'selected' : ''}>아니오</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- 계산 결과 출력 영역 -->
-        <div id="enh-sim-result-body" class="mt-3"></div>
-    `;
-
-    const paramsToggle = document.getElementById('enh-sim-params-toggle');
-    const paramsPanel = document.getElementById('enh-sim-params-panel');
-    if (paramsToggle && paramsPanel) {
-        paramsToggle.onclick = () => {
-            const isHidden = paramsPanel.classList.contains('hidden');
-            paramsPanel.classList.toggle('hidden', !isHidden);
-            paramsToggle.textContent = isHidden ? '변수 설정 닫기 ▴' : '변수 설정 / 시세 조정 ▾';
-        };
-    }
-
-    const runCalculationAndRender = () => {
-        const l = Math.round(Number(document.getElementById('enh-input-l')?.value) || initEnc);
-        const d = Math.round(Number(document.getElementById('enh-input-d')?.value) || initDur);
-        const s10 = parseFloat(document.getElementById('enh-input-s10')?.value) || 0;
-        const s9 = parseFloat(document.getElementById('enh-input-s9')?.value) || 0;
-        const s8 = parseFloat(document.getElementById('enh-input-s8')?.value) || 0;
-        const s7 = parseFloat(document.getElementById('enh-input-s7')?.value) || 0;
-        const reaEok = parseFloat(document.getElementById('enh-input-rea')?.value) || GLOBAL_REA_PRICE_EOK;
-        const stone396Eok = parseFloat(document.getElementById('enh-input-stone')?.value) || FIXED_STONE_396_EOK;
-        const e = Math.round(Number(document.getElementById('enh-input-lvl')?.value) || equipMeta.level);
-        const u = document.getElementById('enh-input-sturdy')?.value === '1';
-
-        const matchedCellSpot = getVariantCellSpotPrice(variant, `${l}_${d}`, true).price;
-        const refBuyPrice = (selectedCell && selectedCell.enc === l && selectedCell.dur === d && selectedCell.spotFair > 0)
-            ? selectedCell.spotFair
-            : matchedCellSpot;
-
-        const tagEl = document.getElementById('enh-current-cell-tag');
-        if (tagEl) {
-            tagEl.innerHTML = refBuyPrice > 0
-                ? `${l}/${d} 적정 매수가: <strong class="text-sky-300">${formatPriceEok(refBuyPrice)}</strong>`
-                : `<span class="text-slate-400">${l}/${d} 시장 거래데이터 없음 (기대가치만 산출)</span>`;
-        }
-
-        const resBody = document.getElementById('enh-sim-result-body');
-        if (!resBody) return;
-
-        if (d <= l) {
-            resBody.innerHTML = `<div class="p-3 rounded-lg bg-rose-950/50 border border-rose-700/50 text-xs text-rose-200 text-center">내구도(${d})가 현재 강화단계(${l}강) 이하이므로 더 이상 강화를 진행할 수 없습니다.</div>`;
-            return;
-        }
-
-        const optRes = optimizeEnhancementExact({ l, d, e, u, s7, s8, s9, s10, reaEok, stone396Eok });
-        const fmtTh = (th) => th === 100 ? '<span class="text-slate-400">안씀 (깡강화)</span>' : `<span class="text-amber-300 font-extrabold">${th}강부터 보호제</span>`;
-
-        const netAfterBuy = refBuyPrice > 0 ? (optRes.ev - refBuyPrice) : null;
-        const netAfterBuyColor = netAfterBuy !== null ? (netAfterBuy >= 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-300';
-        const netAfterBuySign = (netAfterBuy !== null && netAfterBuy > 0) ? '+' : '';
-
-        resBody.innerHTML = `
-            <!-- 1. 최적 보호제 사용 구간 -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                <div class="bg-slate-800/90 rounded-lg p-2 border border-slate-700 text-center">
-                    <div class="text-[10px] text-slate-400">내구도 10 이상</div>
-                    <div class="text-xs font-bold mt-0.5">${d >= 10 ? fmtTh(optRes.th10) : '<span class="text-slate-500">해당없음</span>'}</div>
-                </div>
-                <div class="bg-slate-800/90 rounded-lg p-2 border border-slate-700 text-center">
-                    <div class="text-[10px] text-slate-400">내구도 9</div>
-                    <div class="text-xs font-bold mt-0.5">${d >= 9 ? fmtTh(optRes.th9) : '<span class="text-slate-500">해당없음</span>'}</div>
-                </div>
-                <div class="bg-slate-800/90 rounded-lg p-2 border border-slate-700 text-center">
-                    <div class="text-[10px] text-slate-400">내구도 8</div>
-                    <div class="text-xs font-bold mt-0.5">${d >= 8 ? fmtTh(optRes.th8) : '<span class="text-slate-500">해당없음</span>'}</div>
-                </div>
-                <div class="bg-slate-800/90 rounded-lg p-2 border border-slate-700 text-center">
-                    <div class="text-[10px] text-slate-400">7강/내구8 도달 시</div>
-                    <div class="text-xs font-bold mt-0.5">${optRes.stop78 ? '<span class="text-emerald-300 font-extrabold">🛑 7/8 스톱 유리</span>' : '<span class="text-slate-300">끝까지 진행</span>'}</div>
-                </div>
-            </div>
-
-            <!-- 2. 기대수익(EV) 핵심 요약 -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-                <div class="bg-indigo-950/80 rounded-lg p-2.5 border border-indigo-500/40">
-                    <div class="text-[10px] text-indigo-300 font-semibold">강화 완료 기대수익 (EV, 노베이스)</div>
-                    <div class="text-base font-extrabold ${optRes.ev >= 0 ? 'text-white' : 'text-rose-400'} mt-0.5">${formatPriceEok(optRes.ev)}</div>
-                    <div class="text-[10px] text-slate-400 mt-0.5">기대매출 ${formatPriceEok(optRes.rev)} - 기대비용 ${formatPriceEok(optRes.cost)}</div>
-                </div>
-                <div class="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700">
-                    <div class="text-[10px] text-slate-400 font-semibold">현재 시세 매수 후 강화 시 순수익</div>
-                    <div class="text-base font-extrabold ${netAfterBuyColor} mt-0.5">
-                        ${netAfterBuy !== null ? `${netAfterBuySign}${formatPriceEok(netAfterBuy)}` : '매수가 미상'}
-                    </div>
-                    <div class="text-[10px] text-slate-400 mt-0.5">${refBuyPrice > 0 ? `EV(${formatPriceEok(optRes.ev)}) - 매수가(${formatPriceEok(refBuyPrice)})` : '해당 스펙 거래 기록 없음'}</div>
-                </div>
-                <div class="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700">
-                    <div class="text-[10px] text-slate-400 font-semibold">전 구간 깡강화 대비 보호제 이득</div>
-                    <div class="text-sm font-bold text-amber-300 mt-0.5">
-                        +${formatPriceEok(Math.max(0, optRes.ev - optRes.rawNoProt.ev))}
-                    </div>
-                    <div class="text-[10px] text-slate-400 mt-0.5">무보호 EV: ${formatPriceEok(optRes.rawNoProt.ev)}</div>
-                </div>
-            </div>
-
-            <!-- 3. 최종 도달 확률 분포 -->
-            <div class="bg-slate-950/60 rounded-lg p-2.5 border border-slate-800">
-                <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1.5">
-                    <span>최종 결과 도달 확률 (비-몬테카를로 정확 확률)</span>
-                    <span>보호제 1회당 강레 10개 (${formatPriceEok(10 * reaEok)})</span>
-                </div>
-                <div class="grid grid-cols-5 gap-1 text-center text-xs">
-                    <div class="bg-slate-900 rounded p-1.5 border border-amber-500/30">
-                        <div class="text-[10px] text-amber-300 font-bold">10강</div>
-                        <div class="font-extrabold text-white mt-0.5">${optRes.probs[10].toFixed(2)}%</div>
-                    </div>
-                    <div class="bg-slate-900 rounded p-1.5 border border-slate-800">
-                        <div class="text-[10px] text-indigo-300 font-semibold">9강</div>
-                        <div class="font-bold text-slate-200 mt-0.5">${optRes.probs[9].toFixed(2)}%</div>
-                    </div>
-                    <div class="bg-slate-900 rounded p-1.5 border border-slate-800">
-                        <div class="text-[10px] text-sky-300 font-semibold">8강</div>
-                        <div class="font-bold text-slate-200 mt-0.5">${optRes.probs[8].toFixed(2)}%</div>
-                    </div>
-                    <div class="bg-slate-900 rounded p-1.5 border border-slate-800">
-                        <div class="text-[10px] text-emerald-300 font-semibold">7강</div>
-                        <div class="font-bold text-slate-200 mt-0.5">${optRes.probs[7].toFixed(2)}%</div>
-                    </div>
-                    <div class="bg-slate-900 rounded p-1.5 border border-rose-500/20">
-                        <div class="text-[10px] text-rose-400 font-semibold">파괴</div>
-                        <div class="font-bold text-rose-300 mt-0.5">${optRes.probs[0].toFixed(2)}%</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    };
-
-    // 입력 이벤트 바인딩
-    ['enh-input-l', 'enh-input-d', 'enh-input-s10', 'enh-input-s9', 'enh-input-s8', 'enh-input-s7', 'enh-input-rea', 'enh-input-stone', 'enh-input-lvl', 'enh-input-sturdy'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.oninput = runCalculationAndRender;
-            el.onchange = runCalculationAndRender;
-        }
+    const optRes = optimizeEnhancementExact({
+        l,
+        d,
+        e,
+        u,
+        s7,
+        s8,
+        s9,
+        s10,
+        reaEok: GLOBAL_REA_PRICE_EOK,
+        stone396Eok: FIXED_STONE_396_EOK
     });
 
-    runCalculationAndRender();
+    const fmtTh = (th) => th === 100
+        ? '<span class="text-gray-500 font-semibold">안씀</span>'
+        : `<span class="text-blue-600 font-bold">${th}강부터 보호제</span>`;
+
+    card.classList.remove('hidden');
+    card.innerHTML = `
+        <div class="flex items-baseline gap-2.5 pb-2 border-b border-blue-100/80">
+            <span class="text-xs font-bold text-blue-800 uppercase tracking-tight">강화 완료 기대수익</span>
+            <span class="text-xl font-extrabold ${optRes.ev >= 0 ? 'text-blue-600' : 'text-rose-600'} tracking-tight">${formatPriceEok(optRes.ev)}</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 pt-2.5 text-center sm:text-left">
+            <div class="bg-white/80 rounded-lg px-2.5 py-1.5 border border-gray-100">
+                <div class="text-[10px] text-gray-400 font-medium">내구도 10 이상</div>
+                <div class="text-xs sm:text-sm mt-0.5">${d >= 10 ? fmtTh(optRes.th10) : '<span class="text-gray-400 font-normal">해당없음</span>'}</div>
+            </div>
+            <div class="bg-white/80 rounded-lg px-2.5 py-1.5 border border-gray-100">
+                <div class="text-[10px] text-gray-400 font-medium">내구도 9</div>
+                <div class="text-xs sm:text-sm mt-0.5">${d >= 9 ? fmtTh(optRes.th9) : '<span class="text-gray-400 font-normal">해당없음</span>'}</div>
+            </div>
+            <div class="bg-white/80 rounded-lg px-2.5 py-1.5 border border-gray-100">
+                <div class="text-[10px] text-gray-400 font-medium">내구도 8</div>
+                <div class="text-xs sm:text-sm mt-0.5">${d >= 8 ? fmtTh(optRes.th8) : '<span class="text-gray-400 font-normal">해당없음</span>'}</div>
+            </div>
+        </div>
+
+        <div class="pt-2.5 mt-2.5 border-t border-blue-100/80">
+            <div class="text-[10px] text-gray-500 font-bold mb-1.5">최종 결과 도달 확률</div>
+            <div class="grid grid-cols-5 gap-1.5 text-center">
+                <div class="bg-white/80 rounded-lg py-1.5 px-1 border border-gray-100">
+                    <div class="text-[10px] text-blue-600 font-bold">10강</div>
+                    <div class="text-xs font-extrabold text-gray-900 mt-0.5">${optRes.probs[10].toFixed(2)}%</div>
+                </div>
+                <div class="bg-white/80 rounded-lg py-1.5 px-1 border border-gray-100">
+                    <div class="text-[10px] text-indigo-600 font-semibold">9강</div>
+                    <div class="text-xs font-bold text-gray-800 mt-0.5">${optRes.probs[9].toFixed(2)}%</div>
+                </div>
+                <div class="bg-white/80 rounded-lg py-1.5 px-1 border border-gray-100">
+                    <div class="text-[10px] text-sky-600 font-semibold">8강</div>
+                    <div class="text-xs font-bold text-gray-800 mt-0.5">${optRes.probs[8].toFixed(2)}%</div>
+                </div>
+                <div class="bg-white/80 rounded-lg py-1.5 px-1 border border-gray-100">
+                    <div class="text-[10px] text-emerald-600 font-semibold">7강</div>
+                    <div class="text-xs font-bold text-gray-800 mt-0.5">${optRes.probs[7].toFixed(2)}%</div>
+                </div>
+                <div class="bg-white/80 rounded-lg py-1.5 px-1 border border-gray-100">
+                    <div class="text-[10px] text-rose-500 font-semibold">파괴</div>
+                    <div class="text-xs font-bold text-rose-600 mt-0.5">${optRes.probs[0].toFixed(2)}%</div>
+                </div>
+            </div>
+        </div>
+    `;
 };
 
 // ============================================================================
