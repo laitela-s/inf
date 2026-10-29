@@ -121,13 +121,13 @@ const EQUIP_META_DB = {
     '기메카닉': { officialName: '기술의 튼튼 메카닉 고글', abbr: '기메카닉', level: 80, subType: '쿠폰 의상', part: '모자', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (메카닉 장비는 80레벨 네온 장비와 기능 동일)' },
     '기자켓': { officialName: '기술의 튼튼 메카닉 자켓', abbr: '기자켓', level: 80, subType: '쿠폰 의상', part: '상의', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (메카닉 장비는 80레벨 네온 장비와 기능 동일)' },
     '기메카닉 바지': { officialName: '기술의 튼튼 메카닉 바지', abbr: '기메카닉 바지', level: 80, subType: '쿠폰 의상', part: '하의', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (메카닉 장비는 80레벨 네온 장비와 기능 동일)' },
-    '기고마머리': { officialName: '기술의 마술사 모자 (고양이 마술사)', abbr: '기고마머리, 마술사', level: 70, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (마술사 장비는 70레벨 의상과 기능 동일)' },
-    '튼기고마머리': { officialName: '튼튼한 기술의 마술사 모자 (고양이 마술사)', abbr: '튼기고마머리, 마술사', level: 70, subType: '쿠폰 의상', part: '모자', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (마술사 장비는 70레벨 의상과 기능 동일)' },
-    '체고마머리': { officialName: '체력의 마술사 모자 (고양이 마술사)', abbr: '체고마머리, 마술사', level: 70, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (마술사 장비는 70레벨 의상과 기능 동일)' },
-    '기고마상의': { officialName: '기술의 마술사 상의 (고양이 마술사)', abbr: '기고마상의, 마술사', level: 70, subType: '쿠폰 의상', part: '상의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (마술사 장비는 70레벨 의상과 기능 동일)' },
-    '체고마상의': { officialName: '체력의 마술사 상의 (고양이 마술사)', abbr: '체고마상의, 마술사', level: 70, subType: '쿠폰 의상', part: '상의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (마술사 장비는 70레벨 의상과 기능 동일)' },
-    '기고마하의': { officialName: '기술의 마술사 하의 (고양이 마술사)', abbr: '기고마하의, 마술사', level: 70, subType: '쿠폰 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (마술사 장비는 70레벨 의상과 기능 동일)' },
-    '체고마하의': { officialName: '체력의 마술사 하의 (고양이 마술사)', abbr: '체고마하의, 마술사', level: 70, subType: '쿠폰 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (마술사 장비는 70레벨 의상과 기능 동일)' },
+    '기고마머리': { officialName: '기술의 마술사 모자 (고양이 마술사)', abbr: '기고마머리, 마술사', level: 90, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
+    '튼기고마머리': { officialName: '튼튼한 기술의 마술사 모자 (고양이 마술사)', abbr: '튼기고마머리, 마술사', level: 90, subType: '쿠폰 의상', part: '모자', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
+    '체고마머리': { officialName: '체력의 마술사 모자 (고양이 마술사)', abbr: '체고마머리, 마술사', level: 90, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
+    '기고마상의': { officialName: '기술의 마술사 상의 (고양이 마술사)', abbr: '기고마상의, 마술사', level: 90, subType: '쿠폰 의상', part: '상의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
+    '체고마상의': { officialName: '체력의 마술사 상의 (고양이 마술사)', abbr: '체고마상의, 마술사', level: 90, subType: '쿠폰 의상', part: '상의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
+    '기고마하의': { officialName: '기술의 마술사 하의 (고양이 마술사)', abbr: '기고마하의, 마술사', level: 90, subType: '쿠폰 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
+    '체고마하의': { officialName: '체력의 마술사 하의 (고양이 마술사)', abbr: '체고마하의, 마술사', level: 90, subType: '쿠폰 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
     '기개굴모자': { officialName: '기술의 개구리 모자', abbr: '기개굴모자', level: 70, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (70레벨 의상과 기능 동일)' },
     '체개굴모자': { officialName: '체력의 개구리 모자', abbr: '체개굴모자', level: 70, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (70레벨 의상과 기능 동일)' },
     '체개굴하의': { officialName: '체력의 개구리 하의', abbr: '체개굴하의', level: 70, subType: '쿠폰 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (70레벨 의상과 기능 동일)' },
@@ -219,12 +219,14 @@ const EQUIP_META_DB = {
 const getEquipMeta = (rawName) => {
     const key = normalizeEquipKey(rawName);
     if (EQUIP_META_DB[key]) {
-        return { key, ...EQUIP_META_DB[key] };
+        const meta = { key, ...EQUIP_META_DB[key] };
+        if (key.includes('고마')) meta.level = 90;
+        return meta;
     }
     const isSturdy = key.startsWith('튼') || key.includes('메카');
     const isSwift = key.startsWith('신') || key.includes('쾌');
     let level = 70;
-    if (key.includes('냥')) level = 90;
+    if (key.includes('고마') || key.includes('냥')) level = 90;
     else if (key.includes('네온') || key.includes('메카')) level = 80;
     else if (key.includes('크리')) level = 70;
     else if (key.includes('이리')) level = isSwift ? 52 : 54;
@@ -973,19 +975,23 @@ const loadData = () => {
             RAW_LINES = text.split('\n')
                 .map(line => line.trim())
                 .filter(line => line.length > 0 && line.startsWith('('));
+            gachaSpotCache = {};
             ITEM_INDEX = buildQuickIndex(RAW_LINES);
             updateLastUpdateUI(RAW_LINES);
             updateSortUI();
             renderFilters();
             renderGrid();
+            renderGachaEVSection();
         })
         .catch(() => {
             if (typeof window.FARM_DATA !== 'undefined') {
                 RAW_LINES = Array.isArray(window.FARM_DATA) ? window.FARM_DATA : [];
+                gachaSpotCache = {};
                 ITEM_INDEX = buildQuickIndex(RAW_LINES);
                 updateLastUpdateUI(RAW_LINES);
                 renderFilters();
                 renderGrid();
+                renderGachaEVSection();
             } else {
                 alert("데이터 파일을 찾을 수 없습니다. web/data.txt 또는 web/data.js가 필요합니다.");
             }
@@ -1048,6 +1054,30 @@ const updateLastUpdateUI = (lines) => {
     }
 };
 
+// 유효 옵션 악세서리 화이트리스트 (잡악세는 노출 제외)
+const VALID_ACC_OPTIONS = new Set([
+    '하레', '하경', '발굴', '시균', '타우', '앰플', '키토', '효소', '농아', '고미',
+    '신생', '신씨', '활씨', '활생', '무당벌레알', '진디벌', '이리응애', '천연방제균',
+    '먹이진딧물', '먹이응애', '미생물방제균', 'EM', '농축유산균', '고효',
+    '다그닥', '뱀뱀', '청룡', '찰나', '갈갈'
+]);
+
+const normalizeAccOption = (rawOpt) => {
+    let opt = (rawOpt || '').trim();
+    if (!opt) return '';
+    if (opt.toUpperCase() === 'EM') return 'EM';
+    if (opt === '무당벌레' || opt === '무당벌레알') return '무당벌레알';
+    return opt;
+};
+
+const isAllowedAccOption = (rawOpt) => {
+    const opt = normalizeAccOption(rawOpt);
+    if (!opt) return false;
+    if (VALID_ACC_OPTIONS.has(opt)) return true;
+    if (opt.startsWith('바')) return true;
+    return false;
+};
+
 // --- QUICK INDEX: 빠른 1차 파싱 (아이템 이름 + 세부 셀 카운트 + 강레 시세 자동 추출) ---
 const buildQuickIndex = (lines) => {
     const index = {};
@@ -1066,12 +1096,17 @@ const buildQuickIndex = (lines) => {
             if (parts.length < 8) continue;
             itemName = normalizeEquipKey(parts[3].trim());
             const enc = Math.round(Number(parts[5].trim()));
-            const dur = Math.round(Number(parts[6].trim()));
+            let dur = Math.round(Number(parts[6].trim()));
+            if (enc === 10) {
+                dur = 10; // 10/10, 10/11, 10/12는 10/10으로 통일
+            }
             const option = normalizeOptionVariantKey(parts[4].trim(), enc);
             cellKey = `${option}__${enc}_${dur}`;
         } else if (rawCat === '악세') {
             if (parts.length < 7) continue;
-            itemName = parts[5].trim();
+            const opt = normalizeAccOption(parts[5]);
+            if (!isAllowedAccOption(opt)) continue; // 잡옵션 악세는 노출 제외
+            itemName = opt;
             cellKey = parts[4].trim();
         } else if (rawCat === '재료') {
             if (parts.length < 6) continue;
@@ -1190,7 +1225,11 @@ const processItemOnDemand = (cat, itemName) => {
 
         if (cat === 'equip') {
             const enc = Math.round(Number(entry.enhancement));
-            const dur = Math.round(Number(entry.durability));
+            let dur = Math.round(Number(entry.durability));
+            if (enc === 10) {
+                dur = 10; // 10/10, 10/11, 10/12는 10/10으로 통일
+                entry.durability = 10;
+            }
             const key = `${enc}_${dur}`;
             if (!variantNode.matrix[key]) {
                 variantNode.matrix[key] = { price: price, history: [], count: 0 };
@@ -1297,7 +1336,8 @@ const parseRawLine = (line) => {
         if (parts.length >= 7) {
             entry.piece_or_set = parts[3];
             entry.grade = parts[4];
-            entry.item_name = parts[5];
+            entry.item_name = normalizeAccOption(parts[5]);
+            if (!isAllowedAccOption(entry.item_name)) return null; // 잡옵션 악세 제외
             entry.price = parseFloat(parts[6]);
         } else return null;
     } else if (entry.category === '재료') {
@@ -1783,8 +1823,9 @@ const selectVariant = (item, variant) => {
     header.className = "mb-3 pb-2 border-b border-gray-200 flex items-center justify-between gap-2";
 
     const backBtn = document.createElement('button');
-    backBtn.className = "text-sm text-blue-600 font-medium hover:text-blue-800 flex items-center gap-1 transition-colors";
-    backBtn.innerHTML = `<span>◀</span> 옵션 목록으로 돌아가기`;
+    backBtn.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs sm:text-sm font-bold border border-blue-200/80 transition-all shadow-2xs";
+    const backBtnText = item.category === 'equip' ? '옵션 목록으로 돌아가기' : '등급 목록으로 돌아가기';
+    backBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg> <span>${backBtnText}</span>`;
     backBtn.onclick = (e) => {
         e.stopPropagation();
         renderVariantList(item);
@@ -1815,7 +1856,6 @@ const selectVariant = (item, variant) => {
             </div>
             <div class="opt-stage-detail hidden mt-2 pt-2 border-t border-indigo-100/80 space-y-1.5 text-gray-700">
                 <div>${om.desc}</div>
-                <div class="text-[11px] text-gray-500">장비 스펙: <strong>${m.officialName}</strong> (Lv.${m.level}, ${m.isSturdy ? '튼튼 O' : '튼튼 X'})</div>
                 ${om.stages ? `
                 <div class="grid grid-cols-4 gap-1 text-center pt-1">
                     <div class="bg-white rounded p-1 border border-indigo-100"><div class="text-[10px] text-gray-400">5강</div><div class="font-bold text-gray-800">${om.stages[5]}</div></div>
@@ -1869,48 +1909,262 @@ const selectVariant = (item, variant) => {
 };
 
 const renderMatrix = (item, variant, container) => {
-    const keys = Object.keys(variant.matrix);
+    const isMu = variant.name === '무' || variant.name === '노옵션' || variant.name === '무옵';
+    const equipMeta = item.equipMeta || getEquipMeta(item.name);
+    const isSturdy = equipMeta ? equipMeta.isSturdy : false;
 
-    keys.sort((a, b) => {
-        const [e1, d1] = a.split('_').map(Number);
-        const [e2, d2] = b.split('_').map(Number);
-        return (e1 - e2) || (d1 - d2);
+    // 1. Determine Columns (강화단계)
+    // 무옵: 0강 ~ 10강 (11개 열: 0강 노작 포함)
+    // 옵션: 5강 ~ 10강 (6개 열: 옵션 장비 규격)
+    const encCols = isMu
+        ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        : [5, 6, 7, 8, 9, 10];
+
+    // 2. Determine Rows (내구도: 높은 내구도에서 낮은 내구도 순)
+    // 무옵: 12 down to 1 (12개 행 - 10바이12 규격)
+    // 옵션: 튼튼이면 12 down to 5 (8개 행 - 5바이8), 일반이면 10 down to 5 (6개 행 - 5바이6)
+    const durRows = isMu
+        ? [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+        : (isSturdy
+            ? [12, 11, 10, 9, 8, 7, 6, 5]
+            : [10, 9, 8, 7, 6, 5]);
+
+    // 3. Precompute Option Benchmark Prices
+    let s10 = 0, s9 = 0, s8 = 0, s7 = 0;
+    if (!isMu) {
+        s10 = getVariantCellSpotPrice(variant, '10_10', true).price;
+        s9 = getVariantCellSpotPrice(variant, '9_9', true).price;
+        s8 = getVariantCellSpotPrice(variant, '8_8', true).price;
+        s7 = getVariantCellSpotPrice(variant, '7_7', true).price;
+    }
+
+    // 4. Header / Legend Info
+    const legendBox = document.createElement('div');
+    legendBox.className = "flex flex-wrap items-center justify-between text-[11px] text-gray-500 mb-2.5 px-1 gap-1.5";
+    legendBox.innerHTML = `
+        <span class="font-bold text-gray-700">시세표 (${isMu ? '10×12 규격 표' : (isSturdy ? '5×8 삼각형 표' : '5×6 삼각형 표')})</span>
+        <div class="flex items-center gap-2.5">
+            <span class="inline-flex items-center gap-1">
+                <span class="w-2.5 h-2.5 rounded bg-white border border-gray-300 inline-block shadow-2xs"></span>
+                <span>실제 시세</span>
+            </span>
+            ${!isMu ? `
+            <span class="inline-flex items-center gap-1">
+                <span class="w-2.5 h-2.5 rounded bg-indigo-100 border border-indigo-300 inline-block shadow-2xs"></span>
+                <span class="text-indigo-700 font-semibold">강화 기댓값</span>
+            </span>` : ''}
+        </div>
+    `;
+    container.appendChild(legendBox);
+
+    // 5. Table Container & Element
+    const tableWrap = document.createElement('div');
+    tableWrap.className = "overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-2xs pb-1";
+
+    const table = document.createElement('table');
+    table.className = "w-full border-collapse text-center text-xs";
+
+    // Table Header
+    const thead = document.createElement('thead');
+    const headerTr = document.createElement('tr');
+    headerTr.className = "bg-gray-100/90 text-gray-700 font-bold border-b border-gray-200";
+
+    const cornerTh = document.createElement('th');
+    cornerTh.className = "sticky left-0 z-20 bg-gray-100 py-2 px-1.5 text-[11px] font-bold text-gray-500 border-r border-gray-200 min-w-[50px] whitespace-nowrap shadow-xs";
+    cornerTh.textContent = "내구＼강";
+    headerTr.appendChild(cornerTh);
+
+    encCols.forEach(e => {
+        const th = document.createElement('th');
+        th.className = "py-2 px-1 text-xs font-bold text-gray-800 border-r border-gray-200 min-w-[58px] sm:min-w-[64px] last:border-r-0 whitespace-nowrap";
+        th.textContent = `${e}강`;
+        headerTr.appendChild(th);
     });
+    thead.appendChild(headerTr);
+    table.appendChild(thead);
 
-    const grid = document.createElement('div');
-    grid.className = "grid grid-cols-4 gap-2";
+    // Table Body
+    const tbody = document.createElement('tbody');
 
-    keys.forEach(k => {
-        const d = variant.matrix[k];
-        const [e, dur] = k.split('_').map(Number);
-        const cell = document.createElement('div');
+    durRows.forEach(dur => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-gray-100 last:border-b-0 hover:bg-gray-50/40 transition";
 
-        cell.className = "matrix-choice-cell bg-white p-2 rounded shadow-sm text-center cursor-pointer border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition flex flex-col items-center justify-center min-h-[50px]";
-        cell.innerHTML = `
-            <div class="text-sm font-bold text-gray-900">${e}/${dur}</div>
-        `;
-        cell.onclick = () => {
-            const allCells = grid.querySelectorAll('.matrix-choice-cell');
-            allCells.forEach(c => c.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50'));
-            cell.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50');
+        // Sticky Row Header (Durability)
+        const durTh = document.createElement('th');
+        durTh.className = "sticky left-0 z-10 bg-gray-50 py-1.5 px-1.5 text-xs font-bold text-gray-700 border-r border-gray-200 whitespace-nowrap shadow-xs";
+        durTh.textContent = `${dur}`;
+        tr.appendChild(durTh);
 
-            loadDataAndRender(d.history, d.count);
-            const cellSpot = currentAnalysis ? currentAnalysis.spotFair : 0;
-            currentSelectedCell = { enc: e, dur: dur, spotFair: cellSpot };
-            renderEnhancementSimulatorUI(item, variant, currentSelectedCell);
+        encCols.forEach(enc => {
+            const td = document.createElement('td');
+            td.className = "border-r border-gray-200 last:border-r-0 p-1 min-w-[58px] sm:min-w-[64px] align-middle transition";
 
-            if (window.innerWidth < 1024) {
-                const chartSec = document.getElementById('chart-section');
-                if (chartSec) {
-                    setTimeout(() => {
-                        chartSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                }
+            // 1) Impossible Cell:
+            // 게임 내에서 내구도 < 강화단계는 불가 (dur < enc).
+            // 또한 10/11, 10/12는 10/10으로 통일되므로 enc===10일 때 dur > 10인 칸은 빈칸(비활성).
+            const isImpossible = (enc > dur) || (enc === 10 && dur > 10);
+
+            if (isImpossible) {
+                td.className += " bg-gray-50/50 text-gray-200 select-none cursor-default";
+                td.innerHTML = `<span class="inline-block text-gray-200/60 select-none text-[10px]">&middot;</span>`;
+                tr.appendChild(td);
+                return;
             }
-        };
-        grid.appendChild(cell);
+
+            // 2) Check Market Trade Data & Enhancement EV
+            const cellKey = `${enc}_${dur}`;
+            const cellData = variant.matrix ? variant.matrix[cellKey] : null;
+            const spotInfo = getVariantCellSpotPrice(variant, cellKey, false);
+            const hasMarketPrice = cellData && cellData.history && cellData.history.length > 0 && spotInfo.price > 0;
+
+            // 강화 가능한 옵션 장비 셀인지 여부 (5~9강, 내구도 > 강화단계, 10강 기준가 존재)
+            const isEnhanceable = !isMu && enc >= 5 && enc <= 9 && dur > enc && s10 > 0;
+            let optRes = null;
+            if (isEnhanceable) {
+                optRes = optimizeEnhancementExact({
+                    l: enc,
+                    d: dur,
+                    e: equipMeta.level,
+                    u: equipMeta.isSturdy,
+                    s7, s8, s9, s10,
+                    reaEok: GLOBAL_REA_PRICE_EOK,
+                    stone396Eok: FIXED_STONE_396_EOK
+                });
+            }
+            const hasEv = isEnhanceable && optRes !== null && optRes.ev !== undefined;
+            const evVal = hasEv ? optRes.ev : 0;
+
+            if (hasMarketPrice && hasEv) {
+                // 실제 시세와 강화 기댓값이 둘 다 있는 칸 (동시 표기)
+                td.className += " matrix-choice-cell cursor-pointer bg-white hover:bg-blue-50/80 border border-gray-200 group";
+                td.dataset.enc = enc;
+                td.dataset.dur = dur;
+                td.innerHTML = `
+                    <div class="flex items-center justify-center gap-1 text-[11px] sm:text-xs font-bold text-gray-900 group-hover:text-blue-700 leading-tight">
+                        <span>${formatPriceEok(spotInfo.price)}</span>
+                        <span class="text-[9px] text-gray-400 font-normal">(${cellData.count})</span>
+                    </div>
+                    <div class="text-[10px] font-bold ${evVal >= 0 ? 'text-indigo-600' : 'text-rose-600'} leading-tight mt-0.5">
+                        <span class="text-[9px] font-medium text-gray-400">기댓</span> ${formatPriceEok(evVal)}
+                    </div>
+                `;
+
+                td.onclick = () => {
+                    table.querySelectorAll('.matrix-choice-cell').forEach(c => {
+                        c.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50', 'ring-indigo-500', 'bg-indigo-50');
+                    });
+                    td.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50');
+
+                    loadDataAndRender(cellData.history, cellData.count);
+                    currentSelectedCell = { enc: enc, dur: dur, spotFair: spotInfo.price };
+                    renderEnhancementSimulatorUI(item, variant, currentSelectedCell);
+
+                    if (window.innerWidth < 1024) {
+                        const chartSec = document.getElementById('chart-section');
+                        if (chartSec) {
+                            setTimeout(() => {
+                                chartSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
+                        }
+                    }
+                };
+            } else if (hasMarketPrice) {
+                // 실제 시세만 있는 칸 (10강 완성작, 마감작 또는 무옵션)
+                td.className += " matrix-choice-cell cursor-pointer bg-white hover:bg-blue-50/80 border border-gray-200 group";
+                td.dataset.enc = enc;
+                td.dataset.dur = dur;
+                td.innerHTML = `
+                    <div class="text-[11px] sm:text-xs font-bold text-gray-900 group-hover:text-blue-700 leading-tight">
+                        ${formatPriceEok(spotInfo.price)}
+                    </div>
+                    <div class="text-[9px] text-gray-400 font-medium leading-none mt-0.5">
+                        ${cellData.count}건
+                    </div>
+                `;
+
+                td.onclick = () => {
+                    table.querySelectorAll('.matrix-choice-cell').forEach(c => {
+                        c.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50', 'ring-indigo-500', 'bg-indigo-50');
+                    });
+                    td.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50');
+
+                    loadDataAndRender(cellData.history, cellData.count);
+                    currentSelectedCell = { enc: enc, dur: dur, spotFair: spotInfo.price };
+                    renderEnhancementSimulatorUI(item, variant, currentSelectedCell);
+
+                    if (window.innerWidth < 1024) {
+                        const chartSec = document.getElementById('chart-section');
+                        if (chartSec) {
+                            setTimeout(() => {
+                                chartSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
+                        }
+                    }
+                };
+            } else if (hasEv) {
+                // 실제 시세는 없지만 강화 기댓값은 산출 가능한 칸
+                td.className += " matrix-choice-cell cursor-pointer bg-indigo-50/30 hover:bg-indigo-100/60 border border-indigo-100/80 group";
+                td.dataset.enc = enc;
+                td.dataset.dur = dur;
+                td.innerHTML = `
+                    <div class="text-[10px] text-gray-400 font-normal leading-tight select-none">
+                        시세 없음
+                    </div>
+                    <div class="text-[10px] sm:text-[11px] font-extrabold ${evVal >= 0 ? 'text-indigo-700' : 'text-rose-600'} leading-tight mt-0.5">
+                        <span class="text-[9px] font-medium text-indigo-400">기댓</span> ${formatPriceEok(evVal)}
+                    </div>
+                `;
+
+                td.onclick = () => {
+                    table.querySelectorAll('.matrix-choice-cell').forEach(c => {
+                        c.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50', 'ring-indigo-500', 'bg-indigo-50');
+                    });
+                    td.classList.add('ring-2', 'ring-indigo-500', 'bg-indigo-50');
+
+                    // 시세 거래 기록 없음 -> 차트 초기화 및 플레이스홀더 안내
+                    if (priceChart) { priceChart.destroy(); priceChart = null; }
+                    if (elements.chartPlaceholder) {
+                        elements.chartPlaceholder.classList.remove('hidden');
+                        elements.chartPlaceholder.innerHTML = `
+                            <div class="p-3 text-center">
+                                <div class="text-sm font-bold text-indigo-700 mb-1">${enc}강 ${dur}내구 (거래 기록 없음)</div>
+                                <div class="text-xs text-gray-500">실제 거래 내역이 없어 시세 그래프 대신<br>아래 <span class="font-semibold text-blue-600">강화 완료 기대수익 및 최적 보호제 구간</span>을 표시합니다.</div>
+                            </div>
+                        `;
+                    }
+                    if (elements.marketSummaryCard) {
+                        elements.marketSummaryCard.classList.add('hidden');
+                    }
+
+                    currentSelectedCell = { enc: enc, dur: dur, spotFair: 0 };
+                    renderEnhancementSimulatorUI(item, variant, currentSelectedCell);
+
+                    if (window.innerWidth < 1024) {
+                        const chartSec = document.getElementById('chart-section');
+                        if (chartSec) {
+                            setTimeout(() => {
+                                chartSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
+                        }
+                    }
+                };
+            } else {
+                // 시세 없음 + 강화 기댓값 대상 아님 (무옵션 또는 10강/마감작인데 거래 없음)
+                // "무옵은 기댓값이 없으니 시세가 없으면 칸을 비워두는 방식을 적용하라."
+                td.className += " bg-white/30 text-gray-300 select-none cursor-default";
+                td.innerHTML = `<span class="text-gray-300">-</span>`;
+            }
+
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
     });
-    container.appendChild(grid);
+
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    container.appendChild(tableWrap);
 };
 
 // ============================================================================
@@ -2031,6 +2285,27 @@ const formatPriceEok = (val) => {
     return Number(val.toFixed(2)).toString() + '억';
 };
 
+const calcWeightedMedian = (sortedPairs) => {
+    if (!sortedPairs || sortedPairs.length === 0) return 0;
+    if (sortedPairs.length === 1) return sortedPairs[0].p;
+    let totalW = 0;
+    for (const item of sortedPairs) totalW += item.w;
+    if (totalW <= 0) return calcMedian(sortedPairs.map(x => x.p));
+
+    const halfW = totalW * 0.5;
+    let cumW = 0;
+    for (let i = 0; i < sortedPairs.length; i++) {
+        cumW += sortedPairs[i].w;
+        if (cumW >= halfW) {
+            if (Math.abs(cumW - halfW) < 1e-9 && i + 1 < sortedPairs.length) {
+                return 0.5 * (sortedPairs[i].p + sortedPairs[i + 1].p);
+            }
+            return sortedPairs[i].p;
+        }
+    }
+    return sortedPairs[sortedPairs.length - 1].p;
+};
+
 /**
  * 1D 2-Means (Otsu Bimodal Partition):
  * 구매자(Bid)와 판매자(Ask)의 건수 비율이 9:1 또는 1:9로 극단적 비대칭이어도
@@ -2077,19 +2352,19 @@ const bimodalBidAsk = (prices, weights) => {
         const cost = v1 + v2;
         if (cost < bestCost) {
             bestCost = cost;
-            bestBid = calcMedian(pairs.slice(0, k).map(x => x.p));
-            bestAsk = calcMedian(pairs.slice(k).map(x => x.p));
+            bestBid = calcWeightedMedian(pairs.slice(0, k));
+            bestAsk = calcWeightedMedian(pairs.slice(k));
             bestW1 = w1;
             bestW2 = w2;
         }
     }
 
-    const consensus = calcMedian(prices);
+    const consensus = calcWeightedMedian(pairs);
     const totalW = bestW1 + bestW2;
     const ratio = Math.min(bestW1, bestW2) / Math.max(totalW, 1e-9);
-    // 양쪽 호가 군집이 1:2~1:3 수준까지는 50:50 스프레드 중간값을 온전히 보존(balanceFactor = 1.0)
-    // 1:6, 1:10 처럼 1명의 고립된 호가로 치우칠 경우 다수파 컨센서스로 앵커링하여 솟구침(오버슈트) 방지
-    const balanceFactor = Math.min(1.0, 3.5 * ratio);
+    // 동시대 양쪽 호가 군집이 1:2~1:2.5 수준까지는 50:50 스프레드 중간값을 보존(balanceFactor = 1.0)
+    // 과거 시세 잔상이나 1명의 고립된 호가로 가중치가 작아진 군집은 가중 컨센서스로 부드럽게 앵커링
+    const balanceFactor = Math.min(1.0, 2.5 * ratio);
     const rawMid = 0.5 * (bestBid + bestAsk);
     const mid = balanceFactor * rawMid + (1.0 - balanceFactor) * consensus;
 
@@ -2145,9 +2420,9 @@ const computeMarketAnalysis = (rawHistory) => {
         const ud = userDays[i];
         const p = ud.price;
 
-        // 주변 +-45일 고유 유저 수집 (유저 수가 부족하면 +-90일, 전체로 확장)
+        // 주변 +-45일 고유 유저 수집 (유저 수가 부족하면 +-90일, +-150일, 전체로 확장)
         let uMap = new Map();
-        for (const winDays of [45, 90, 99999]) {
+        for (const winDays of [45, 90, 150, 99999]) {
             uMap.clear();
             for (const other of userDays) {
                 if (Math.abs(other.dayIdx - ud.dayIdx) <= winDays) {
@@ -2155,7 +2430,8 @@ const computeMarketAnalysis = (rawHistory) => {
                     uMap.get(other.nick).push(other.price);
                 }
             }
-            if (uMap.size >= Math.min(4, allUniqueUsers.size)) break;
+            const reqUsers = winDays >= 90 ? Math.min(3, allUniqueUsers.size) : Math.min(4, allUniqueUsers.size);
+            if (uMap.size >= reqUsers) break;
         }
 
         const uMeds = [];
@@ -2167,14 +2443,18 @@ const computeMarketAnalysis = (rawHistory) => {
         const mad = calcMedian(uMeds.map(m => Math.abs(m - lMed)));
         const sigma = Math.max(1.4826 * mad, lMed * 0.08);
 
-        // 본인 외에 이 가격(±10%)에 동의하는 다른 고유 유저 수
-        let otherUsersNear = 0;
-        for (const [uNick, pList] of uMap.entries()) {
-            if (uNick === ud.nick) continue;
-            if (pList.some(val => Math.abs(val - p) / Math.max(lMed, 1e-6) <= 0.10)) {
-                otherUsersNear++;
+        // 본인 외에 전후 ±150일 내 이 가격(±12%)에 동의하는 다른 고유 유저 수 (추세 전환 징검다리 보존)
+        const nearUserSet = new Set();
+        for (const other of userDays) {
+            if (other.nick === ud.nick) continue;
+            if (Math.abs(other.dayIdx - ud.dayIdx) <= 150) {
+                const relDiff = Math.abs(other.price - p) / Math.max(Math.min(lMed, p), 1e-6);
+                if (relDiff <= 0.12) {
+                    nearUserSet.add(other.nick);
+                }
             }
         }
+        const otherUsersNear = nearUserSet.size;
 
         // 주변 ±25일 내 유사 가격(±8%)이 등장한 날짜 수
         const simDays = new Set();
@@ -2192,7 +2472,7 @@ const computeMarketAnalysis = (rawHistory) => {
             // 2) 1~2일 단발성으로 튀는 오타/급처 특이값
             ud.status = 'hard_outlier';
             hardOutlierRawCount += ud.rawCount;
-        } else if (Math.abs(p - lMed) > 2.2 * sigma && otherUsersNear === 0) {
+        } else if (Math.abs(p - lMed) > 2.2 * sigma && otherUsersNear === 0 && simDays.size < 4) {
             // 3) 단독 1인이 고립된 가격에 고집하는 미체결 알박기/배짱 호가 (동조자 0명) 제거
             ud.status = 'hard_outlier';
             hardOutlierRawCount += ud.rawCount;
@@ -2228,24 +2508,28 @@ const computeMarketAnalysis = (rawHistory) => {
     for (const gt of gridPoints) {
         let winPts = [];
         let chosenWinDays = 30;
-        for (const wd of [30, 45, 60, 90, 180, 99999]) {
+        for (const wd of [30, 45, 60, 90, 135, 180, 270, 99999]) {
             chosenWinDays = wd;
             winPts = validUD.filter(u => Math.abs(u.ts - gt) <= wd * DAY_MS);
             const uSet = new Set(winPts.map(u => u.nick));
-            if (uSet.size >= minTargetUsers && winPts.length >= 2) break;
+            const reqUsers = wd >= 180
+                ? Math.min(2, allUniqueUsers.size)
+                : (wd >= 120 ? Math.min(3, allUniqueUsers.size) : minTargetUsers);
+            if (uSet.size >= reqUsers && winPts.length >= 2) break;
         }
         if (winPts.length === 0) winPts = validUD;
 
-        // 윈도우 내 고유 유저별 시간 가중 평균 호가 계산 (1인 독식 방지 캡 적용)
+        // 윈도우 내 고유 유저별 시간 가중 평균 호가 계산 (1인 독식 방지 캡 + 시간 감쇠 상한 + 최근성 가중치 연동)
         const userAcc = new Map();
-        const tau = Math.max(7, chosenWinDays * 0.55);
+        const tau = Math.min(45, Math.max(7, chosenWinDays * 0.40));
         for (const u of winPts) {
-            const dtDays = (u.ts - gt) / DAY_MS;
+            const dtDays = Math.abs(u.ts - gt) / DAY_MS;
             const w = Math.exp(-0.5 * Math.pow(dtDays / tau, 2));
-            if (!userAcc.has(u.nick)) userAcc.set(u.nick, { swp: 0, sw: 0 });
+            if (!userAcc.has(u.nick)) userAcc.set(u.nick, { swp: 0, sw: 0, minDtDays: dtDays });
             const acc = userAcc.get(u.nick);
             acc.swp += w * u.effPrice;
             acc.sw += w;
+            if (dtDays < acc.minDtDays) acc.minDtDays = dtDays;
         }
 
         const uPrices = [];
@@ -2253,7 +2537,8 @@ const computeMarketAnalysis = (rawHistory) => {
         for (const [, acc] of userAcc.entries()) {
             if (acc.sw > 0) {
                 uPrices.push(acc.swp / acc.sw);
-                uWeights.push(Math.min(acc.sw, 1.5)); // 도배 유저 가중치 상한 캡
+                const recencyFactor = Math.exp(-0.5 * Math.pow(acc.minDtDays / 35, 2));
+                uWeights.push(Math.min(acc.sw, 1.5) * Math.max(0.01, recencyFactor)); // 도배 상한 캡 + 최근성 감쇠
             }
         }
 
@@ -2638,6 +2923,614 @@ const updateChart = () => {
         console.error(e);
     }
 };
+
+
+// ============================================================================
+// 🎰 도박(금도·다도) 기대수익 및 손익 백분위 곡선 시스템
+// ============================================================================
+let currentGachaType = 'gold'; // 'gold' | 'dia'
+let currentGachaMetric = 'profit'; // 'profit' (순수익 억) | 'roi' (수익률 %)
+let gachaChartInstance = null;
+let gachaSpotCache = {};
+let isGachaTableExpanded = false;
+
+// 1. 악세서리 실시간 적정 시세 조회기 (캐싱 지원)
+const getAccSpotPrice = (itemName, targetGrade) => {
+    const cacheKey = `${itemName}__${targetGrade}`;
+    if (gachaSpotCache[cacheKey] !== undefined) {
+        return gachaSpotCache[cacheKey];
+    }
+
+    const itemData = ITEM_INDEX['acc']?.[itemName];
+    if (!itemData || !itemData.lineIndices || itemData.lineIndices.length === 0) {
+        gachaSpotCache[cacheKey] = 0;
+        return 0;
+    }
+
+    const history = [];
+    for (const idx of itemData.lineIndices) {
+        const line = RAW_LINES[idx];
+        const clean = line.replace(/^\(|\)$/g, '');
+        const parts = clean.split(',').map(s => s.trim());
+        if (parts.length >= 7 && parts[2] === '악세' && parts[4] === targetGrade) {
+            const price = parseFloat(parts[6]) || 0;
+            if (price <= 0) continue;
+            const dateParts = parts[0].split('.');
+            if (dateParts.length < 3) continue;
+            const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], dateParts[3] || 0, dateParts[4] || 0);
+            history.push({
+                date: dateObj.toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }),
+                isoDate: dateObj,
+                price: price,
+                meta: { nickname: parts[1] }
+            });
+        }
+    }
+
+    if (history.length === 0) {
+        gachaSpotCache[cacheKey] = 0;
+        return 0;
+    }
+
+    try {
+        const analysis = computeMarketAnalysis(history);
+        if (analysis && analysis.spotFair > 0) {
+            const spot = Number(analysis.spotFair.toFixed(2));
+            gachaSpotCache[cacheKey] = spot;
+            return spot;
+        }
+    } catch (e) {
+        console.warn('computeMarketAnalysis error for', itemName, targetGrade, e);
+    }
+
+    // 폴백: 최근 5건 중앙값
+    const recent = history.slice(-5).map(h => h.price);
+    recent.sort((a, b) => a - b);
+    const fallback = recent[Math.floor(recent.length / 2)] || history[history.length - 1].price;
+    gachaSpotCache[cacheKey] = Number(fallback.toFixed(2));
+    return gachaSpotCache[cacheKey];
+};
+
+// 2. 도박 확률 및 품목 정의
+const GACHA_GOLD_CONFIG = [
+    { name: '바씨', label: '바씨 (반/목)', count: 2, probPerPiece: 0.009710, grade: '금' },
+    { name: '바새', label: '바새 (반/목)', count: 2, probPerPiece: 0.009710, grade: '금' },
+    { name: '바발', label: '바발 (반/목)', count: 2, probPerPiece: 0.009710, grade: '금' },
+    { name: '바흙', label: '바흙 (반/목)', count: 2, probPerPiece: 0.009710, grade: '금' },
+    { name: '바진', label: '바진 (반/목)', count: 2, probPerPiece: 0.009710, grade: '금' },
+    { name: '바물', label: '바물 (반/목)', count: 2, probPerPiece: 0.009710, grade: '금' },
+    { name: '바손', label: '바손 (반/목)', count: 2, probPerPiece: 0.009710, grade: '금' },
+    { name: '바칼', label: '바칼 (반/목)', count: 2, probPerPiece: 0.009710, grade: '금' },
+    { name: '바생', label: '바생 (반/목)', count: 2, probPerPiece: 0.009710, grade: '금' },
+    { name: '활씨', label: '활씨 (반/목)', count: 2, probPerPiece: 0.019420, grade: '금' },
+    { name: '활생', label: '활생 (반/목)', count: 2, probPerPiece: 0.019420, grade: '금' },
+    { name: '신씨', label: '신씨 (반/목)', count: 2, probPerPiece: 0.013870, grade: '금' },
+    { name: '신생', label: '신생 (반/목)', count: 2, probPerPiece: 0.016180, grade: '금' },
+    { name: '고미', label: '고미 (반/목)', count: 2, probPerPiece: 0.019420, grade: '금' },
+    { name: '농아', label: '농아 (반/목)', count: 2, probPerPiece: 0.019420, grade: '금' },
+    { name: '효소', label: '효소 (반/목)', count: 2, probPerPiece: 0.019420, grade: '금' },
+    { name: '키토', label: '키토 (반/목)', count: 2, probPerPiece: 0.019420, grade: '금' },
+    { name: '타우', label: '타우 (반/목)', count: 2, probPerPiece: 0.019420, grade: '금' },
+    { name: '앰플', label: '앰플 (반/목)', count: 2, probPerPiece: 0.019420, grade: '금' },
+    { name: '시균', label: '시균 (반/목)', count: 2, probPerPiece: 0.019420, grade: '금' },
+    { name: '발굴', label: '발굴 (반/목)', count: 2, probPerPiece: 0.011650, grade: '금' },
+    { name: '하경', label: '하경 (반/목)', count: 2, probPerPiece: 0.016180, grade: '금' },
+    { name: '하레', label: '하레 (반/목)', count: 2, probPerPiece: 0.016180, grade: '금' }
+];
+
+const GACHA_DIA_CONFIG = [
+    { name: '활씨', label: '활씨 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '활생', label: '활생 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '신씨', label: '신씨 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '신생', label: '신생 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '고미', label: '고미 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '농아', label: '농아 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '효소', label: '효소 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '키토', label: '키토 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '타우', label: '타우 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '앰플', label: '앰플 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '시균', label: '시균 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '발굴', label: '발굴 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '하경', label: '하경 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' },
+    { name: '하레', label: '하레 (반/목)', count: 2, probPerPiece: 0.020830, grade: '다' }
+];
+
+// 3. 기대치 및 통계 산출
+const computeGachaStats = (type) => {
+    const isGold = type === 'gold';
+    const grade = isGold ? '금' : '다';
+    const config = isGold ? GACHA_GOLD_CONFIG : GACHA_DIA_CONFIG;
+
+    const galgalSpot = getAccSpotPrice('갈갈', grade);
+    const pieceCost = galgalSpot > 0 ? (galgalSpot / 18) : 0;
+    const pullCost = pieceCost * 99;
+
+    let valuableProbSum = 0;
+    const items = [];
+
+    for (const conf of config) {
+        const spot = getAccSpotPrice(conf.name, grade);
+        const totalProb = conf.count * conf.probPerPiece;
+        valuableProbSum += totalProb;
+        const evCont = spot * totalProb;
+        const profit = spot - pullCost;
+        const roi = pullCost > 0 ? (profit / pullCost) * 100 : 0;
+
+        items.push({
+            name: conf.name,
+            label: conf.label,
+            count: conf.count,
+            probPerPiece: conf.probPerPiece,
+            totalProb: totalProb,
+            spotPrice: spot,
+            evContribution: evCont,
+            profit: profit,
+            roi: roi,
+            isGalgal: false
+        });
+    }
+
+    const galgalProb = Math.max(0, 1.0 - valuableProbSum);
+    const galgalCount = isGold ? 1 : 20;
+    const galgalEV = galgalSpot * galgalProb;
+    const galgalProfit = galgalSpot - pullCost;
+    const galgalRoi = pullCost > 0 ? (galgalProfit / pullCost) * 100 : 0;
+
+    items.push({
+        name: '갈갈',
+        label: isGold ? '기타 꽝(갈갈)' : '기타 20종(갈갈)',
+        count: galgalCount,
+        probPerPiece: isGold ? galgalProb : galgalProb / galgalCount,
+        totalProb: galgalProb,
+        spotPrice: galgalSpot,
+        evContribution: galgalEV,
+        profit: galgalProfit,
+        roi: galgalRoi,
+        isGalgal: true
+    });
+
+    items.sort((a, b) => b.spotPrice - a.spotPrice);
+
+    let cumProb = 0;
+    for (const it of items) {
+        it.cumStart = cumProb;
+        cumProb += it.totalProb;
+        it.cumEnd = Math.min(1.0, cumProb);
+    }
+
+    const totalEV = items.reduce((sum, it) => sum + it.evContribution, 0);
+    const netProfit = totalEV - pullCost;
+    const avgRoi = pullCost > 0 ? (netProfit / pullCost) * 100 : 0;
+
+    const bepProb = items
+        .filter(it => it.profit >= 0)
+        .reduce((sum, it) => sum + it.totalProb, 0);
+
+    return {
+        type,
+        grade,
+        galgalSpot,
+        pieceCost,
+        pullCost,
+        items,
+        totalEV,
+        netProfit,
+        avgRoi,
+        bepProb
+    };
+};
+
+// 4. Chart.js 데이터셋 생성
+const buildGachaChartData = (stats, metric) => {
+    const isProfit = metric === 'profit';
+    const pts = [];
+
+    for (const it of stats.items) {
+        const yVal = isProfit ? it.profit : it.roi;
+        const xStart = it.cumStart * 100;
+        const xEnd = it.cumEnd * 100;
+
+        pts.push({
+            x: xStart,
+            y: yVal,
+            item: it.label,
+            spotPrice: it.spotPrice,
+            profit: it.profit,
+            roi: it.roi,
+            prob: it.totalProb * 100
+        });
+
+        pts.push({
+            x: xEnd,
+            y: yVal,
+            item: it.label,
+            spotPrice: it.spotPrice,
+            profit: it.profit,
+            roi: it.roi,
+            prob: it.totalProb * 100
+        });
+    }
+
+    return pts;
+};
+
+// 5. 차트 렌더링
+const renderGachaChart = (stats) => {
+    const canvas = document.getElementById('gacha-curve-chart');
+    if (!canvas) return;
+
+    if (gachaChartInstance) {
+        try {
+            gachaChartInstance.destroy();
+        } catch (e) {}
+        gachaChartInstance = null;
+    }
+
+    const isProfit = currentGachaMetric === 'profit';
+    const curvePoints = buildGachaChartData(stats, currentGachaMetric);
+    const evY = isProfit ? stats.netProfit : stats.avgRoi;
+
+    const ctx = canvas.getContext('2d');
+    gachaChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: isProfit ? '손익 백분위 곡선 (억)' : '수익률 백분위 곡선 (%)',
+                    data: curvePoints,
+                    borderColor: '#2563eb',
+                    fill: {
+                        target: 'origin',
+                        above: 'rgba(16, 185, 129, 0.16)',
+                        below: 'rgba(239, 68, 68, 0.14)'
+                    },
+                    tension: 0,
+                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHitRadius: 10
+                },
+                {
+                    label: '본전선 (0선)',
+                    data: [{ x: 0, y: 0 }, { x: 100, y: 0 }],
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: `평균 기대손익 (${evY >= 0 ? '+' : ''}${evY.toFixed(1)}${isProfit ? '억' : '%'})`,
+                    data: [{ x: 0, y: evY }, { x: 100, y: evY }],
+                    borderColor: '#ef4444',
+                    borderWidth: 2,
+                    borderDash: [4, 4],
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 300 },
+            scales: {
+                x: {
+                    type: 'linear',
+                    min: 0,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: '결과의 좋은 정도 (상위 백분위 %)',
+                        font: { size: 11, weight: 'bold' },
+                        color: '#6b7280'
+                    },
+                    ticks: {
+                        callback: (val) => `${val}%`,
+                        font: { size: 10 },
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        color: 'rgba(229, 231, 235, 0.6)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: isProfit ? '1회당 순수익 (억 단위)' : '1회당 수익률 (%)',
+                        font: { size: 11, weight: 'bold' },
+                        color: '#6b7280'
+                    },
+                    ticks: {
+                        callback: (val) => isProfit
+                            ? `${val > 0 ? '+' : ''}${Math.round(val).toLocaleString()}억`
+                            : `${val > 0 ? '+' : ''}${Math.round(val)}%`,
+                        font: { size: 10 },
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        color: (c) => c.tick.value === 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(229, 231, 235, 0.6)',
+                        lineWidth: (c) => c.tick.value === 0 ? 1.5 : 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 14,
+                        font: { size: 11, weight: '600' },
+                        color: '#4b5563',
+                        padding: 12
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    titleFont: { size: 12, weight: 'bold' },
+                    bodyFont: { size: 11 },
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        title: (items) => {
+                            const pt = items[0]?.raw;
+                            if (!pt) return '';
+                            return `상위 ${pt.x.toFixed(2)}% 구간`;
+                        },
+                        label: (item) => {
+                            const pt = item.raw;
+                            if (item.datasetIndex === 0) {
+                                return [
+                                    `🎯 결과 품목: ${pt.item || ''}`,
+                                    `💰 최신 시세: ${pt.spotPrice ? pt.spotPrice.toLocaleString() + '억' : '-'}`,
+                                    `💵 1회 순수익: ${pt.profit > 0 ? '+' : ''}${pt.profit.toFixed(1)}억`,
+                                    `📈 1회 수익률: ${pt.roi > 0 ? '+' : ''}${pt.roi.toFixed(1)}%`
+                                ];
+                            } else if (item.datasetIndex === 1) {
+                                return `⚖️ 본전선 (순수익 0억 / 0.0%)`;
+                            } else {
+                                return `📊 평균 기대손익: ${evY > 0 ? '+' : ''}${evY.toFixed(1)}${isProfit ? '억' : '%'}`;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+};
+
+// 6. 전체 UI 렌더링
+const renderGachaEVSection = () => {
+    const container = document.getElementById('gacha-ev-section');
+    if (!container) return;
+    if (!RAW_LINES || RAW_LINES.length === 0 || !ITEM_INDEX['acc']) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const isGold = currentGachaType === 'gold';
+    const stats = computeGachaStats(currentGachaType);
+
+    container.innerHTML = `
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 md:p-6 mb-6">
+            <!-- Header & Tabs -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🎰</span>
+                        <h2 class="text-base sm:text-lg font-bold text-gray-900">도박(금도 · 다도) 기대수익 및 손익 백분위 곡선</h2>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700">실시간 연동</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        갈갈 및 악세서리 최신 적정 시세 자동 반영 (1회 비용 = 갈갈 시세 ÷ 18 × 99)
+                    </p>
+                </div>
+
+                <!-- Mode Controls -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Gacha Switcher -->
+                    <div class="flex bg-gray-100 p-1 rounded-xl">
+                        <button id="btn-gacha-gold" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${isGold ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'}">
+                            🪙 금도 (금조각 99)
+                        </button>
+                        <button id="btn-gacha-dia" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${!isGold ? 'bg-cyan-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'}">
+                            💎 다도 (다조각 99)
+                        </button>
+                    </div>
+
+                    <!-- Metric Switcher -->
+                    <div class="flex bg-gray-100 p-1 rounded-xl">
+                        <button id="btn-metric-profit" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${currentGachaMetric === 'profit' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'}">
+                            순수익 (억)
+                        </button>
+                        <button id="btn-metric-roi" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${currentGachaMetric === 'roi' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'}">
+                            수익률 (%)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Summary Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 my-4">
+                <!-- 1회 비용 -->
+                <div class="bg-gray-50/70 border border-gray-100 rounded-xl p-3 sm:p-3.5">
+                    <div class="text-[11px] font-medium text-gray-500">1회 뽑기 비용 (조각 99개)</div>
+                    <div class="text-lg sm:text-xl font-extrabold text-gray-900 mt-0.5">
+                        ${stats.pullCost.toFixed(1)}억
+                    </div>
+                    <div class="text-[10px] text-gray-400 mt-1 truncate">
+                        갈갈 ${stats.galgalSpot.toFixed(1)}억 (개당 ${(stats.galgalSpot / 18).toFixed(2)}억)
+                    </div>
+                </div>
+
+                <!-- 1회 기대가 -->
+                <div class="bg-gray-50/70 border border-gray-100 rounded-xl p-3 sm:p-3.5">
+                    <div class="text-[11px] font-medium text-gray-500">1회 기대 획득가 (EV)</div>
+                    <div class="text-lg sm:text-xl font-extrabold text-blue-600 mt-0.5">
+                        ${stats.totalEV.toFixed(1)}억
+                    </div>
+                    <div class="text-[10px] text-gray-400 mt-1">
+                        전 품목 확률 가중 기대값
+                    </div>
+                </div>
+
+                <!-- 1회 기대손익 -->
+                <div class="bg-gray-50/70 border border-gray-100 rounded-xl p-3 sm:p-3.5">
+                    <div class="text-[11px] font-medium text-gray-500">1회 평균 손익 · 수익률</div>
+                    <div class="text-lg sm:text-xl font-extrabold ${stats.netProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">
+                        ${stats.netProfit >= 0 ? '+' : ''}${stats.netProfit.toFixed(1)}억
+                        <span class="text-xs sm:text-sm font-semibold">(${stats.avgRoi >= 0 ? '+' : ''}${stats.avgRoi.toFixed(1)}%)</span>
+                    </div>
+                    <div class="text-[10px] ${stats.netProfit >= 0 ? 'text-emerald-500' : 'text-rose-400'} mt-1">
+                        ${stats.netProfit >= 0 ? '평균 수익 기대' : '1회당 평균 손실'}
+                    </div>
+                </div>
+
+                <!-- 본전 승률 -->
+                <div class="bg-gray-50/70 border border-gray-100 rounded-xl p-3 sm:p-3.5">
+                    <div class="text-[11px] font-medium text-gray-500">본전 이상 확률 (승률)</div>
+                    <div class="text-lg sm:text-xl font-extrabold text-indigo-600 mt-0.5">
+                        상위 ${(stats.bepProb * 100).toFixed(1)}%
+                    </div>
+                    <div class="text-[10px] text-gray-400 mt-1">
+                        하위 ${(100 - stats.bepProb * 100).toFixed(1)}%는 비용 미만 손실
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                        <span>📈 결과 좋은 정도(상위 %)에 따른 손익 백분위 곡선</span>
+                    </div>
+                    <span class="text-[10px] text-gray-400">마우스 호버/터치 시 상세 정보</span>
+                </div>
+                <div class="relative w-full h-[260px] sm:h-[300px]">
+                    <canvas id="gacha-curve-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Table Toggle -->
+            <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <button id="btn-toggle-gacha-table" class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition">
+                    <span id="btn-toggle-gacha-table-text">
+                        ${isGachaTableExpanded ? '▲ 전 품목 출현 확률 및 기대치 상세표 접기' : '▼ 전 품목 출현 확률 및 기대치 상세표 보기 (' + stats.items.length + '개 항목)'}
+                    </span>
+                </button>
+                <span class="text-[10px] text-gray-400">정렬: 시세 높은 순</span>
+            </div>
+
+            <!-- Detailed Table Container -->
+            <div id="gacha-table-container" class="${isGachaTableExpanded ? '' : 'hidden'} mt-3 overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 font-semibold">
+                            <th class="py-2.5 px-3">품목 (옵션)</th>
+                            <th class="py-2.5 px-2 text-center">피스 구성</th>
+                            <th class="py-2.5 px-2 text-right">개당 확률</th>
+                            <th class="py-2.5 px-2 text-right">합산 확률</th>
+                            <th class="py-2.5 px-3 text-center">상위 백분위 구간</th>
+                            <th class="py-2.5 px-3 text-right">최신 적정 시세</th>
+                            <th class="py-2.5 px-3 text-right">1회 기여 기대가</th>
+                            <th class="py-2.5 px-3 text-right">1회 순손익</th>
+                            <th class="py-2.5 px-3 text-right">1회 수익률</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        ${stats.items.map(it => `
+                            <tr class="${it.isGalgal ? 'bg-gray-50/70 text-gray-500' : 'hover:bg-blue-50/40 transition'}">
+                                <td class="py-2 px-3 font-medium text-gray-900 flex items-center gap-1.5">
+                                    ${it.isGalgal ? '<span class="text-xs">🗑️</span>' : '<span class="text-xs">✨</span>'}
+                                    <span>${it.label}</span>
+                                </td>
+                                <td class="py-2 px-2 text-center text-gray-500">
+                                    ${it.isGalgal ? (isGold ? '나머지 꽝' : '20개 품목') : (it.count === 2 ? '반지+목걸이' : it.count + '개')}
+                                </td>
+                                <td class="py-2 px-2 text-right text-gray-600 font-mono">
+                                    ${(it.probPerPiece * 100).toFixed(4)}%
+                                </td>
+                                <td class="py-2 px-2 text-right font-bold text-gray-800 font-mono">
+                                    ${(it.totalProb * 100).toFixed(4)}%
+                                </td>
+                                <td class="py-2 px-3 text-center text-[11px] text-gray-500 font-mono">
+                                    상위 ${(it.cumStart * 100).toFixed(2)}% ~ ${(it.cumEnd * 100).toFixed(2)}%
+                                </td>
+                                <td class="py-2 px-3 text-right font-semibold text-gray-900 font-mono">
+                                    ${it.spotPrice.toLocaleString()}억
+                                </td>
+                                <td class="py-2 px-3 text-right font-medium text-blue-600 font-mono">
+                                    ${it.evContribution.toFixed(2)}억
+                                </td>
+                                <td class="py-2 px-3 text-right font-bold font-mono ${it.profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+                                    ${it.profit >= 0 ? '+' : ''}${it.profit.toFixed(1)}억
+                                </td>
+                                <td class="py-2 px-3 text-right font-bold font-mono ${it.roi >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+                                    ${it.roi >= 0 ? '+' : ''}${it.roi.toFixed(1)}%
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                    <tfoot class="bg-gray-50 border-t-2 border-gray-300 font-bold text-gray-900">
+                        <tr>
+                            <td class="py-2.5 px-3">합계 (${stats.items.length}개 항목)</td>
+                            <td class="py-2.5 px-2 text-center text-gray-500">-</td>
+                            <td class="py-2.5 px-2 text-right text-gray-500">-</td>
+                            <td class="py-2.5 px-2 text-right text-indigo-700 font-mono">100.0000%</td>
+                            <td class="py-2.5 px-3 text-center text-gray-500 font-mono">상위 0.00% ~ 100.00%</td>
+                            <td class="py-2.5 px-3 text-right text-gray-500">-</td>
+                            <td class="py-2.5 px-3 text-right text-blue-700 font-mono">${stats.totalEV.toFixed(2)}억</td>
+                            <td class="py-2.5 px-3 text-right font-mono ${stats.netProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+                                ${stats.netProfit >= 0 ? '+' : ''}${stats.netProfit.toFixed(1)}억
+                            </td>
+                            <td class="py-2.5 px-3 text-right font-mono ${stats.avgRoi >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+                                ${stats.avgRoi >= 0 ? '+' : ''}${stats.avgRoi.toFixed(1)}%
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    `;
+
+    // Event Listeners
+    document.getElementById('btn-gacha-gold')?.addEventListener('click', () => {
+        currentGachaType = 'gold';
+        renderGachaEVSection();
+    });
+
+    document.getElementById('btn-gacha-dia')?.addEventListener('click', () => {
+        currentGachaType = 'dia';
+        renderGachaEVSection();
+    });
+
+    document.getElementById('btn-metric-profit')?.addEventListener('click', () => {
+        currentGachaMetric = 'profit';
+        renderGachaEVSection();
+    });
+
+    document.getElementById('btn-metric-roi')?.addEventListener('click', () => {
+        currentGachaMetric = 'roi';
+        renderGachaEVSection();
+    });
+
+    document.getElementById('btn-toggle-gacha-table')?.addEventListener('click', () => {
+        isGachaTableExpanded = !isGachaTableExpanded;
+        const tbl = document.getElementById('gacha-table-container');
+        const txt = document.getElementById('btn-toggle-gacha-table-text');
+        if (tbl) {
+            tbl.classList.toggle('hidden', !isGachaTableExpanded);
+        }
+        if (txt) {
+            txt.textContent = isGachaTableExpanded
+                ? '▲ 전 품목 출현 확률 및 기대치 상세표 접기'
+                : '▼ 전 품목 출현 확률 및 기대치 상세표 보기 (' + stats.items.length + '개 항목)';
+        }
+    });
+
+    // Draw Chart
+    renderGachaChart(stats);
+};
+
 
 document.addEventListener('DOMContentLoaded', init);
 
