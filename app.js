@@ -244,6 +244,93 @@ const getEquipMeta = (rawName) => {
 };
 
 // ============================================================================
+// ★ 일반 <-> 튼튼 종결 장비 (10_10, 9_9, 8_8, 7_7) 암묵적 시세 통합 정의
+// ============================================================================
+const COMPLETED_ENHANCE_CELLS = new Set(['10_10', '9_9', '8_8', '7_7']);
+
+const EQUIP_PARTNER_MAP = {
+    // 낫
+    '크리낫': '튼크리낫',
+    '튼크리낫': '크리낫',
+    '에로낫': '튼에로낫',
+    '튼에로낫': '에로낫',
+
+    // 모종삽 / 거름삽
+    '크리모삽': '튼크리모삽',
+    '튼크리모삽': '크리모삽',
+    '크리거삽': '튼크리거삽',
+    '튼크리거삽': '크리거삽',
+    '에로거삽': '튼에로거삽',
+    '튼에로거삽': '에로거삽',
+    '네온거삽': '튼네온거삽',
+    '튼네온거삽': '네온거삽',
+
+    // 괭이
+    '크리괭이': '튼크리괭이',
+    '튼크리괭이': '크리괭이',
+    '에로괭이': '튼에로괭이',
+    '튼에로괭이': '에로괭이',
+
+    // 의상 - 팬더
+    '일팬모': '튼팬모',
+    '튼팬모': '일팬모',
+    '일팬상': '튼팬상',
+    '튼팬상': '일팬상',
+    '일팬하': '튼팬하',
+    '튼팬하': '일팬하',
+
+    // 의상 - 네온
+    '네온머리': '튼네온머리',
+    '튼네온머리': '네온머리',
+    '네온장갑': '튼네온장갑',
+    '튼네온장갑': '네온장갑',
+    '네온부츠': '튼네온부츠',
+    '튼네온부츠': '네온부츠',
+
+    // 의상 - 일반의상
+    '셔츠': '튼셔츠',
+    '일셔츠': '튼셔츠',
+    '튼셔츠': '일셔츠',
+    '일바지': '튼바지',
+    '튼바지': '일바지',
+
+    // 의상 - 방독면/슈트 등
+    '일슛': '튼슛',
+    '튼슛': '일슛',
+    '일썬': '튼썬',
+    '튼썬': '일썬',
+    '일쫄': '튼쫄',
+    '튼쫄': '일쫄',
+    '일헬': '튼헬',
+    '튼헬': '일헬',
+
+    // 기타
+    '다마': '튼다마',
+    '튼다마': '다마',
+    '기고마머리': '튼기고마머리',
+    '튼기고마머리': '기고마머리'
+};
+
+const getEquipPartnerKey = (itemName) => {
+    if (!itemName) return null;
+    const direct = EQUIP_PARTNER_MAP[itemName];
+    if (direct) return direct;
+
+    // 동적 접두사 규칙 폴백
+    if (itemName.startsWith('튼')) {
+        const withoutTeun = itemName.slice(1);
+        if (EQUIP_META_DB[withoutTeun]) return withoutTeun;
+        const withIl = '일' + withoutTeun;
+        if (EQUIP_META_DB[withIl]) return withIl;
+    } else {
+        const withTeun = '튼' + itemName.replace(/^일/, '');
+        if (EQUIP_META_DB[withTeun]) return withTeun;
+    }
+    return null;
+};
+
+
+// ============================================================================
 // ★ 2. 옵션 정식 명칭 · 줄임말 · 부위별/강화단계별(5/7/9/10강) 세부효과 도감 DB
 // ============================================================================
 const normalizeOptionVariantKey = (rawOpt, enc) => {
@@ -1141,6 +1228,32 @@ const buildQuickIndex = (lines) => {
         }
     }
 
+    // 일반 <-> 튼튼 종결 셀(10_10, 9_9, 8_8, 7_7) 카운트 상호 합산
+    if (index['equip']) {
+        const equipIndex = index['equip'];
+        const processedPartners = new Set();
+        Object.keys(equipIndex).forEach(itemName => {
+            const partnerName = getEquipPartnerKey(itemName);
+            if (!partnerName || !equipIndex[partnerName]) return;
+            const pairKey = [itemName, partnerName].sort().join('___');
+            if (processedPartners.has(pairKey)) return;
+            processedPartners.add(pairKey);
+
+            const item = equipIndex[itemName];
+            const partner = equipIndex[partnerName];
+
+            const allKeys = new Set([...Object.keys(item.cellCounts), ...Object.keys(partner.cellCounts)]);
+            for (const fullKey of allKeys) {
+                const parts = fullKey.split('__');
+                if (parts.length === 2 && COMPLETED_ENHANCE_CELLS.has(parts[1])) {
+                    const combined = (item.cellCounts[fullKey] || 0) + (partner.cellCounts[fullKey] || 0);
+                    item.cellCounts[fullKey] = combined;
+                    partner.cellCounts[fullKey] = combined;
+                }
+            }
+        });
+    }
+
     // 강레(레알, 강화) 최신 적정 시세 자동 계산
     if (reaHistory.length > 0) {
         try {
@@ -1195,7 +1308,8 @@ const processItemOnDemand = (cat, itemName) => {
             date: dateObj.toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }),
             isoDate: dateObj,
             price: price,
-            meta: entry
+            meta: entry,
+            rawLineIdx: idx
         };
 
         item.history.push(historyItem);
@@ -1240,6 +1354,69 @@ const processItemOnDemand = (cat, itemName) => {
         }
     }
 
+    // 일반 <-> 튼튼 종결 셀(10_10, 9_9, 8_8, 7_7) 데이터 암묵적 병합
+    if (cat === 'equip') {
+        const partnerName = getEquipPartnerKey(canonicalName);
+        const partnerInfo = partnerName ? ITEM_INDEX['equip']?.[partnerName] : null;
+        if (partnerInfo) {
+            for (const pIdx of partnerInfo.lineIndices) {
+                const pEntry = parseRawLine(RAW_LINES[pIdx]);
+                if (!pEntry) continue;
+
+                const pPrice = parseFloat(pEntry.price) || 0;
+                if (pPrice <= 0) continue;
+
+                const pEnc = Math.round(Number(pEntry.enhancement));
+                let pDur = Math.round(Number(pEntry.durability));
+                if (pEnc === 10) {
+                    pDur = 10;
+                    pEntry.durability = 10;
+                }
+                const cellKey = `${pEnc}_${pDur}`;
+                if (!COMPLETED_ENHANCE_CELLS.has(cellKey)) continue; // 10_10, 9_9, 8_8, 7_7만 병합!
+
+                const pVariantKey = normalizeOptionVariantKey(pEntry.option || "노옵션", pEnc);
+
+                if (!item.variants[pVariantKey]) {
+                    const optMeta = getOptionMeta(pVariantKey, equipMeta);
+                    item.variants[pVariantKey] = {
+                        name: pVariantKey,
+                        displayName: optMeta ? optMeta.officialName : pVariantKey,
+                        optMeta,
+                        matrix: {},
+                        rawMatrixAll: {},
+                        spotCache: {},
+                        history: [],
+                        count: 0
+                    };
+                }
+
+                const vNode = item.variants[pVariantKey];
+                const pDateParts = pEntry.date.split('.');
+                const pDateObj = new Date(pDateParts[0], pDateParts[1] - 1, pDateParts[2], pDateParts[3] || 0, pDateParts[4] || 0);
+                const pHistoryItem = {
+                    date: pDateObj.toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }),
+                    isoDate: pDateObj,
+                    price: pPrice,
+                    meta: pEntry,
+                    rawLineIdx: pIdx
+                };
+
+                if (!vNode.matrix[cellKey]) {
+                    vNode.matrix[cellKey] = { price: pPrice, history: [], count: 0 };
+                }
+                vNode.matrix[cellKey].history.push(pHistoryItem);
+                vNode.matrix[cellKey].count++;
+
+                if (!vNode.rawMatrixAll[cellKey]) {
+                    vNode.rawMatrixAll[cellKey] = { price: pPrice, history: [], count: 0 };
+                }
+                vNode.rawMatrixAll[cellKey].history.push(pHistoryItem);
+                vNode.rawMatrixAll[cellKey].count++;
+            }
+        }
+    }
+
     item.history.sort((a, b) => a.isoDate - b.isoDate);
 
     const validVariants = {};
@@ -1253,7 +1430,7 @@ const processItemOnDemand = (cat, itemName) => {
 
             Object.entries(v.matrix).forEach(([mKey, m]) => {
                 m.count = m.history.length;
-                m.history.sort((a, b) => a.isoDate - b.isoDate);
+                m.history.sort((a, b) => (a.isoDate - b.isoDate) || ((a.rawLineIdx || 0) - (b.rawLineIdx || 0)));
                 if (m.history.length > 0) {
                     m.price = m.history[m.history.length - 1].price;
                 }
