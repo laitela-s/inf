@@ -1389,6 +1389,7 @@ const setupEventListeners = () => {
                 currentCategory = e.target.dataset.category;
                 renderFilters();
                 renderGrid();
+                renderGachaEVSection();
             };
         });
     }
@@ -2933,6 +2934,7 @@ let currentGachaMetric = 'profit'; // 'profit' (순수익 억) | 'roi' (수익�
 let gachaChartInstance = null;
 let gachaSpotCache = {};
 let isGachaTableExpanded = false;
+let isGachaMainOpen = false; // 기본값: 닫힘 (장비탭 숨김 & 악세탭에서 버튼 눌러야 열림)
 
 // 1. 악세서리 실시간 적정 시세 조회기 (캐싱 지원)
 const getAccSpotPrice = (itemName, targetGrade) => {
@@ -3302,17 +3304,72 @@ const renderGachaChart = (stats) => {
 const renderGachaEVSection = () => {
     const container = document.getElementById('gacha-ev-section');
     if (!container) return;
+
+    // 1. 장비 탭에서는 완전히 숨김 (노출 안 됨)
+    if (currentCategory === 'equip') {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        if (gachaChartInstance) {
+            try { gachaChartInstance.destroy(); } catch (e) {}
+            gachaChartInstance = null;
+        }
+        return;
+    }
+
+    // 악세서리 탭에서는 컨테이너 표시
+    container.classList.remove('hidden');
+
     if (!RAW_LINES || RAW_LINES.length === 0 || !ITEM_INDEX['acc']) {
         container.innerHTML = '';
         return;
     }
 
+    // 2. 닫혀 있는 상태: 버튼을 눌러야 열림
+    if (!isGachaMainOpen) {
+        if (gachaChartInstance) {
+            try { gachaChartInstance.destroy(); } catch (e) {}
+            gachaChartInstance = null;
+        }
+
+        container.innerHTML = `
+            <div class="mb-4">
+                <button id="btn-toggle-gacha-main" class="w-full flex items-center justify-between p-3.5 bg-gradient-to-r from-amber-50/80 via-indigo-50/50 to-blue-50/70 hover:from-amber-100/90 hover:to-blue-100/80 rounded-2xl border border-amber-200/80 shadow-sm transition-all group cursor-pointer text-left">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl group-hover:scale-110 transition-transform">🎰</span>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-bold text-gray-900">도박(금도 · 다도) 기대수익 및 손익 백분위 곡선</span>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800">실시간 연동</span>
+                            </div>
+                            <div class="text-[11px] text-gray-500 mt-0.5">
+                                금조각·다조각 99개 도박의 확률별 기대수익, 승률(BEP), 손익 백분위 곡선 분석 보기
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-white/90 px-3.5 py-1.5 rounded-xl border border-blue-200 shadow-2xs group-hover:bg-blue-600 group-hover:text-white transition">
+                        <span>분석 열기</span>
+                        <svg class="w-4 h-4 transform group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+        `;
+
+        document.getElementById('btn-toggle-gacha-main')?.addEventListener('click', () => {
+            isGachaMainOpen = true;
+            renderGachaEVSection();
+        });
+        return;
+    }
+
+    // 3. 열려 있는 상태: 전체 분석 카드 + Chart.js 곡선 + 상세표 + 상단 '접기' 버튼
     const isGold = currentGachaType === 'gold';
     const stats = computeGachaStats(currentGachaType);
 
     container.innerHTML = `
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 md:p-6 mb-6">
-            <!-- Header & Tabs -->
+            <!-- Header & Tabs & Close Button -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100">
                 <div>
                     <div class="flex items-center gap-2">
@@ -3325,7 +3382,7 @@ const renderGachaEVSection = () => {
                     </p>
                 </div>
 
-                <!-- Mode Controls -->
+                <!-- Mode Controls & Fold Button -->
                 <div class="flex flex-wrap items-center gap-2">
                     <!-- Gacha Switcher -->
                     <div class="flex bg-gray-100 p-1 rounded-xl">
@@ -3346,6 +3403,14 @@ const renderGachaEVSection = () => {
                             수익률 (%)
                         </button>
                     </div>
+
+                    <!-- Fold (Close) Button -->
+                    <button id="btn-close-gacha-main" class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition cursor-pointer">
+                        <span>접기</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
 
@@ -3412,7 +3477,7 @@ const renderGachaEVSection = () => {
 
             <!-- Table Toggle -->
             <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                <button id="btn-toggle-gacha-table" class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition">
+                <button id="btn-toggle-gacha-table" class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition cursor-pointer">
                     <span id="btn-toggle-gacha-table-text">
                         ${isGachaTableExpanded ? '▲ 전 품목 출현 확률 및 기대치 상세표 접기' : '▼ 전 품목 출현 확률 및 기대치 상세표 보기 (' + stats.items.length + '개 항목)'}
                     </span>
@@ -3493,6 +3558,11 @@ const renderGachaEVSection = () => {
     `;
 
     // Event Listeners
+    document.getElementById('btn-close-gacha-main')?.addEventListener('click', () => {
+        isGachaMainOpen = false;
+        renderGachaEVSection();
+    });
+
     document.getElementById('btn-gacha-gold')?.addEventListener('click', () => {
         currentGachaType = 'gold';
         renderGachaEVSection();
@@ -3530,7 +3600,6 @@ const renderGachaEVSection = () => {
     // Draw Chart
     renderGachaChart(stats);
 };
-
 
 document.addEventListener('DOMContentLoaded', init);
 
