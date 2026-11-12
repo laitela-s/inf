@@ -4,6 +4,7 @@
 # Allow these files at the root
 !index.html
 !app.js
+!precomputed_stats.js
 !style.css
 !data.txt
 !README.md

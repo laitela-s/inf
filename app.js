@@ -17,13 +17,25 @@ let ITEM_INDEX = {};
 let GLOBAL_REA_PRICE_EOK = 0.166; // (레알, 강화) 최신 적정 시세 (억 단위, 기본값 0.166억 = 1,660만)
 const FIXED_STONE_396_EOK = 1.2;  // 강화석 396개당 1.2억 고정
 let currentCategory = 'equip';
+let currentPartFilter = 'all'; // 'all' | '괭이' | '낫' | '물뿌' | '거삽' | '모삽' | '모자' | '상의' | '하의'
+let currentTagFilter = 'all';
+let currentAccTagFilter = 'all'; // 'all' | '에코' | '바람' | '활력' | '신속' | '재료' | '발굴' | '하레' | '특수' | '듀얼' | '갈갈'
 let currentChartRange = 'all';
 let currentYScale = 'normal';
 let currentChartMode = 'curve'; // 'curve' (시세곡선) | 'compare' (원본비교)
+
+const SORT_MODES = [
+    { key: 'freq', label: '빈도순', desc: '거래량순', equipOnly: false },
+    { key: 'korean', label: 'ㄱㄴㄷ순', desc: '이름순', equipOnly: false },
+    { key: 'korean_desc', label: 'ㄱㄴㄷ 역순', desc: '이름 역순', equipOnly: false },
+    { key: 'level_asc', label: '레벨제한순', desc: '낮은 렙제순', equipOnly: true },
+    { key: 'level_desc', label: '레벨제한 역순', desc: '높은 렙제순', equipOnly: true }
+];
+
 let currentSortMode = (function () {
     try {
         const saved = localStorage.getItem('farm_sort_mode');
-        if (saved === 'korean' || saved === 'freq') return saved;
+        if (['freq', 'korean', 'korean_desc', 'level_asc', 'level_desc'].includes(saved)) return saved;
     } catch (e) {}
     return 'freq';
 })();
@@ -114,20 +126,20 @@ const EQUIP_META_DB = {
     '체네온부츠': { officialName: '체력의 네온 부츠', abbr: '체네온 부츠, 체네온부츠', level: 80, subType: '일반 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: false },
     '기네온부츠': { officialName: '기술의 네온 부츠', abbr: '기네온 부츠, 기네온부츠', level: 80, subType: '일반 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: false },
 
-    // --- 쿠폰 장비 (메카닉=80렙 네온 동일, 마술사/토끼/개굴/도련=70렙 동일) ---
+    // --- 쿠폰 장비 (메카닉=80렙 네온 동일, 고마초/토끼/개굴/도련=70렙 동일) ---
     '체메카머리': { officialName: '체력의 튼튼 메카닉 고글', abbr: '체메카닉, 체메카머리', level: 80, subType: '쿠폰 의상', part: '모자', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (메카닉 장비는 80레벨 네온 장비와 기능 동일)' },
     '체자켓': { officialName: '체력의 튼튼 메카닉 자켓', abbr: '체자켓', level: 80, subType: '쿠폰 의상', part: '상의', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (메카닉 장비는 80레벨 네온 장비와 기능 동일)' },
     '체메카닉 바지': { officialName: '체력의 튼튼 메카닉 바지', abbr: '체메카닉 바지', level: 80, subType: '쿠폰 의상', part: '하의', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (메카닉 장비는 80레벨 네온 장비와 기능 동일)' },
     '기메카닉': { officialName: '기술의 튼튼 메카닉 고글', abbr: '기메카닉', level: 80, subType: '쿠폰 의상', part: '모자', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (메카닉 장비는 80레벨 네온 장비와 기능 동일)' },
     '기자켓': { officialName: '기술의 튼튼 메카닉 자켓', abbr: '기자켓', level: 80, subType: '쿠폰 의상', part: '상의', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (메카닉 장비는 80레벨 네온 장비와 기능 동일)' },
     '기메카닉 바지': { officialName: '기술의 튼튼 메카닉 바지', abbr: '기메카닉 바지', level: 80, subType: '쿠폰 의상', part: '하의', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (메카닉 장비는 80레벨 네온 장비와 기능 동일)' },
-    '기고마머리': { officialName: '기술의 마술사 모자 (고양이 마술사)', abbr: '기고마머리, 마술사', level: 90, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
-    '튼기고마머리': { officialName: '튼튼한 기술의 마술사 모자 (고양이 마술사)', abbr: '튼기고마머리, 마술사', level: 90, subType: '쿠폰 의상', part: '모자', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
-    '체고마머리': { officialName: '체력의 마술사 모자 (고양이 마술사)', abbr: '체고마머리, 마술사', level: 90, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
-    '기고마상의': { officialName: '기술의 마술사 상의 (고양이 마술사)', abbr: '기고마상의, 마술사', level: 90, subType: '쿠폰 의상', part: '상의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
-    '체고마상의': { officialName: '체력의 마술사 상의 (고양이 마술사)', abbr: '체고마상의, 마술사', level: 90, subType: '쿠폰 의상', part: '상의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
-    '기고마하의': { officialName: '기술의 마술사 하의 (고양이 마술사)', abbr: '기고마하의, 마술사', level: 90, subType: '쿠폰 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
-    '체고마하의': { officialName: '체력의 마술사 하의 (고양이 마술사)', abbr: '체고마하의, 마술사', level: 90, subType: '쿠폰 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (고양이 마술사 장비는 90레벨 의상)' },
+    '기고마머리': { officialName: '기술의 고마초 모자', abbr: '기고마머리, 기고마모, 고마모, 고마머리', level: 90, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE },
+    '튼기고마머리': { officialName: '기술의 튼튼 고마초 모자', abbr: '튼기고마머리, 튼고마머리, 튼고마모', level: 90, subType: '쿠폰 의상', part: '모자', isSturdy: true, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE },
+    '체고마머리': { officialName: '체력의 고마초 모자', abbr: '체고마머리, 체고마모, 고마모, 고마머리', level: 90, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE },
+    '기고마상의': { officialName: '기술의 고마초 스카프', abbr: '기고마상의, 기고마스카프, 고마상의, 고마스카프', level: 90, subType: '쿠폰 의상', part: '상의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE },
+    '체고마상의': { officialName: '체력의 고마초 스카프', abbr: '체고마상의, 체고마스카프, 고마상의, 고마스카프', level: 90, subType: '쿠폰 의상', part: '상의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE },
+    '기고마하의': { officialName: '기술의 고마초 꼬리', abbr: '기고마하의, 기고마꼬리, 고마하의, 고마꼬리', level: 90, subType: '쿠폰 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE },
+    '체고마하의': { officialName: '체력의 고마초 꼬리', abbr: '체고마하의, 체고마꼬리, 고마하의, 고마꼬리', level: 90, subType: '쿠폰 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE },
     '기개굴모자': { officialName: '기술의 개구리 모자', abbr: '기개굴모자', level: 70, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (70레벨 의상과 기능 동일)' },
     '체개굴모자': { officialName: '체력의 개구리 모자', abbr: '체개굴모자', level: 70, subType: '쿠폰 의상', part: '모자', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (70레벨 의상과 기능 동일)' },
     '체개굴하의': { officialName: '체력의 개구리 하의', abbr: '체개굴하의', level: 70, subType: '쿠폰 의상', part: '하의', isSturdy: false, isSwift: false, isCoupon: true, desc: COUPON_SET_NOTE + ' (70레벨 의상과 기능 동일)' },
@@ -155,11 +167,11 @@ const EQUIP_META_DB = {
     '네온거삽': { officialName: '네온 거름삽', abbr: '네온삽, 네온거, 네온거삽', level: 80, subType: '농기구', part: '거름삽', isSturdy: false, isSwift: false, isCoupon: false },
     '튼네온거삽': { officialName: '튼튼한 네온 거름삽', abbr: '튼네온삽, 튼네온거, 튼네온거삽', level: 80, subType: '농기구', part: '거름삽', isSturdy: true, isSwift: false, isCoupon: false },
     '신네온거삽': { officialName: '신속한 네온 거름삽', abbr: '신네온삽, 신네온거, 신네온거삽', level: 80, subType: '농기구', part: '거름삽', isSturdy: false, isSwift: true, isCoupon: false },
-    '신냥거삽': { officialName: '신속한 냥냥 거름삽', abbr: '신냥삽, 신냥거, 신냥거삽', level: 90, subType: '농기구', part: '거름삽', isSturdy: false, isSwift: true, isCoupon: false },
+    '신냥거삽': { officialName: '신속한 냥냥 거름삽', abbr: '신냥삽, 신냥거, 신냥거삽', level: 90, subType: '농기구', part: '거름삽', isSturdy: false, isSwift: true, isCoupon: true },
 
     // --- 농기구: 모종삽 ---
     '이리모삽': { officialName: '이리스의 모종삽', abbr: '이리모, 이리모삽', level: 54, subType: '농기구', part: '모종삽', isSturdy: false, isSwift: false, isCoupon: false },
-    '신이리모삽': { officialName: '신속한 이리스의 모종삽', abbr: '신이리모, 신이리모삽', level: 52, subType: '농기구', part: '모종삽', isSturdy: false, isSwift: true, isCoupon: false, desc: '신속(신) 접두사 적용으로 기본 이리스의 모종삽(54렙) 대비 -2레벨(52렙)이 적용됩니다.' },
+    '신이리모삽': { officialName: '신속한 이리스의 모종삽', abbr: '신이리모, 신이리모삽', level: 52, subType: '농기구', part: '모종삽', isSturdy: false, isSwift: true, isCoupon: true, desc: '신속(신) 접두사 적용으로 기본 이리스의 모종삽(54렙) 대비 -2레벨(52렙)이 적용됩니다.' },
     '아프모': { officialName: '아프로디테의 모종삽', abbr: '아프모', level: 58, subType: '농기구', part: '모종삽', isSturdy: false, isSwift: false, isCoupon: false },
     '에로모삽': { officialName: '에로스 모종삽', abbr: '에로모, 에로모삽', level: 68, subType: '농기구', part: '모종삽', isSturdy: false, isSwift: false, isCoupon: false },
     '크리모삽': { officialName: '크리스탈 모종삽', abbr: '크리모, 크리모삽', level: 70, subType: '농기구', part: '모종삽', isSturdy: false, isSwift: false, isCoupon: false },
@@ -169,7 +181,7 @@ const EQUIP_META_DB = {
     '신네온모삽': { officialName: '신속한 네온 모종삽', abbr: '신네온모삽', level: 80, subType: '농기구', part: '모종삽', isSturdy: false, isSwift: true, isCoupon: false },
 
     // --- 농기구: 낫 ---
-    '신이리낫': { officialName: '신속한 이리스의 낫', abbr: '신이리낫', level: 52, subType: '농기구', part: '낫', isSturdy: false, isSwift: true, isCoupon: false, desc: '신속(신) 접두사 적용으로 기본 이리스의 낫(54렙) 대비 -2레벨(52렙)이 적용됩니다.' },
+    '신이리낫': { officialName: '신속한 이리스의 낫', abbr: '신이리낫', level: 52, subType: '농기구', part: '낫', isSturdy: false, isSwift: true, isCoupon: true, desc: '신속(신) 접두사 적용으로 기본 이리스의 낫(54렙) 대비 -2레벨(52렙)이 적용됩니다.' },
     '크로낫': { officialName: '크로노스의 낫', abbr: '크로낫', level: 56, subType: '농기구', part: '낫', isSturdy: false, isSwift: false, isCoupon: false },
     '에로낫': { officialName: '에로스의 낫', abbr: '에로낫', level: 66, subType: '농기구', part: '낫', isSturdy: false, isSwift: false, isCoupon: false },
     '튼에로낫': { officialName: '튼튼한 에로스의 낫', abbr: '튼에로낫', level: 66, subType: '농기구', part: '낫', isSturdy: true, isSwift: false, isCoupon: false },
@@ -179,7 +191,7 @@ const EQUIP_META_DB = {
     '튼네온낫': { officialName: '튼튼한 네온 낫', abbr: '튼네온낫', level: 80, subType: '농기구', part: '낫', isSturdy: true, isSwift: false, isCoupon: false },
 
     // --- 농기구: 물뿌리개 ---
-    '신이리물뿌': { officialName: '신속한 이리스의 물뿌리개', abbr: '신이리물, 신이리물뿌', level: 52, subType: '농기구', part: '물뿌리개', isSturdy: false, isSwift: true, isCoupon: false, desc: '신속(신) 접두사 적용으로 기본 이리스의 물뿌리개(54렙) 대비 -2레벨(52렙)이 적용됩니다.' },
+    '신이리물뿌': { officialName: '신속한 이리스의 물뿌리개', abbr: '신이리물, 신이리물뿌', level: 52, subType: '농기구', part: '물뿌리개', isSturdy: false, isSwift: true, isCoupon: true, desc: '신속(신) 접두사 적용으로 기본 이리스의 물뿌리개(54렙) 대비 -2레벨(52렙)이 적용됩니다.' },
     '포세': { officialName: '포세이돈 물뿌리개', abbr: '포세, 포세물', level: 55, subType: '농기구', part: '물뿌리개', isSturdy: false, isSwift: false, isCoupon: false },
     '신포세': { officialName: '신속한 포세이돈 물뿌리개', abbr: '신포세, 신포세물', level: 53, subType: '농기구', part: '물뿌리개', isSturdy: false, isSwift: true, isCoupon: false, desc: '신속(신) 접두사 적용으로 기본 포세이돈 물뿌리개(55렙) 대비 -2레벨(53렙)이 적용됩니다.' },
     '에로물뿌': { officialName: '에로스의 물뿌리개', abbr: '에로물, 에로물뿌', level: 65, subType: '농기구', part: '물뿌리개', isSturdy: false, isSwift: false, isCoupon: false },
@@ -188,8 +200,8 @@ const EQUIP_META_DB = {
     '신크리물뿌': { officialName: '신속한 크리스탈 물뿌리개', abbr: '신크리물, 신크리물뿌', level: 70, subType: '농기구', part: '물뿌리개', isSturdy: false, isSwift: true, isCoupon: false },
     '네온물뿌': { officialName: '네온 물뿌리개', abbr: '네온물, 네온물뿌', level: 80, subType: '농기구', part: '물뿌리개', isSturdy: false, isSwift: false, isCoupon: false },
     '신네온물뿌': { officialName: '신속한 네온 물뿌리개', abbr: '신네온물, 신네온물뿌', level: 80, subType: '농기구', part: '물뿌리개', isSturdy: false, isSwift: true, isCoupon: false },
-    '신냥물뿌': { officialName: '신속한 냥냥 물뿌리개', abbr: '신냥물, 신냥물뿌', level: 90, subType: '농기구', part: '물뿌리개', isSturdy: false, isSwift: true, isCoupon: false },
-    '튼쾌냥물뿌': { officialName: '튼튼하고 쾌적한 냥냥 물뿌리개', abbr: '튼쾌냥물뿌', level: 90, subType: '농기구', part: '물뿌리개', isSturdy: true, isSwift: true, isCoupon: false },
+    '신냥물뿌': { officialName: '신속한 냥냥 물뿌리개', abbr: '신냥물, 신냥물뿌', level: 90, subType: '농기구', part: '물뿌리개', isSturdy: false, isSwift: true, isCoupon: true },
+    '튼쾌냥물뿌': { officialName: '쾌속의 튼튼 냥냥 물뿌리개', abbr: '튼쾌냥물뿌, 쾌튼냥물뿌, 쾌냥물뿌', level: 90, subType: '농기구', part: '물뿌리개', isSturdy: true, isSwift: true, isCoupon: true },
 
     // --- 농기계: 로터리 (51 / 60 / 65 / 75) ---
     '일로': { officialName: '로터리', abbr: '일로', level: 51, subType: '농기계', part: '로터리', isSturdy: false, isSwift: false, isCoupon: false },
@@ -218,29 +230,136 @@ const EQUIP_META_DB = {
 
 const getEquipMeta = (rawName) => {
     const key = normalizeEquipKey(rawName);
-    if (EQUIP_META_DB[key]) {
-        const meta = { key, ...EQUIP_META_DB[key] };
-        if (key.includes('고마')) meta.level = 90;
-        return meta;
+    let meta = EQUIP_META_DB[key] ? { key, ...EQUIP_META_DB[key] } : null;
+
+    if (!meta) {
+        const isSturdy = key.startsWith('튼') || key.includes('메카');
+        const isSwift = key.startsWith('신') || key.includes('쾌');
+        let level = 70;
+        if (key.includes('냥') || key.includes('고마')) level = 90;
+        else if (key.includes('네온') || key.includes('메카')) level = 80;
+        else if (key.includes('크리')) level = 70;
+        else if (key.includes('이리')) level = isSwift ? 52 : 54;
+        meta = {
+            key,
+            officialName: key,
+            abbr: key,
+            level,
+            subType: '장비',
+            part: '기타',
+            isSturdy,
+            isSwift,
+            isCoupon: false
+        };
     }
-    const isSturdy = key.startsWith('튼') || key.includes('메카');
-    const isSwift = key.startsWith('신') || key.includes('쾌');
-    let level = 70;
-    if (key.includes('고마') || key.includes('냥')) level = 90;
-    else if (key.includes('네온') || key.includes('메카')) level = 80;
-    else if (key.includes('크리')) level = 70;
-    else if (key.includes('이리')) level = isSwift ? 52 : 54;
-    return {
-        key,
-        officialName: key,
-        abbr: key,
-        level,
-        subType: '장비',
-        part: '기타',
-        isSturdy,
-        isSwift,
-        isCoupon: false
-    };
+
+    // --- 동적 속성 정밀 판정 (접두어 & 쿠폰 & 가족거래) ---
+    const offName = meta.officialName || meta.key;
+
+    // 1. 기술 (isTech) & 체력 (isHp)
+    const isTech = Boolean(meta.isTech || meta.key.startsWith('기') || meta.key.includes('튼기') || offName.includes('기술의') || offName.startsWith('기술'));
+    const isHp = Boolean(meta.isHp || meta.key.startsWith('체') || offName.includes('체력의') || offName.startsWith('체력'));
+
+    // 2. 튼튼 (isSturdy)
+    const isSturdy = Boolean(meta.isSturdy || meta.key.startsWith('튼') || meta.key.includes('메카') || offName.includes('튼튼'));
+
+    // 3. 신속 / 쾌속 (isSwift)
+    const isSwift = Boolean(meta.isSwift || meta.key.startsWith('신') || meta.key.includes('쾌') || offName.includes('신속') || offName.includes('쾌속'));
+    const isKae = Boolean(meta.key.includes('쾌') || offName.includes('쾌속'));
+
+    // 4. 쿠폰장비 (isCoupon)
+    // "냥 들어간거, 신이리(그냥 이리는 아님), 고마 붙은거, 메카 붙은건 쿠폰장비다."
+    let isCoupon = Boolean(meta.isCoupon);
+    if (meta.key.includes('냥') || offName.includes('냥')) {
+        isCoupon = true;
+    } else if (meta.key.includes('신이리') || (meta.key.includes('이리') && isSwift) || (offName.includes('이리스') && isSwift)) {
+        isCoupon = true;
+    } else if (meta.key.includes('고마') || offName.includes('고마초')) {
+        isCoupon = true;
+    } else if (meta.key.includes('메카') || offName.includes('메카닉') || meta.key === '기자켓' || meta.key === '체자켓') {
+        isCoupon = true;
+    } else if (meta.key.includes('이리') || offName.includes('이리스')) {
+        isCoupon = false; // 일반 이리스는 제외 ("그냥 이리는 아님")
+    }
+
+    // 5. 가족거래 (isFamilyTrade)
+    // "튼튼이랑 쾌속, 튼튼 기술, 튼튼체력같이 접두어가 2개 이상 붙는다? 이건 가족거래다."
+    const prefixCount = (isSturdy ? 1 : 0) + (isSwift ? 1 : 0) + (isTech ? 1 : 0) + (isHp ? 1 : 0);
+    const isFamilyTrade = prefixCount >= 2;
+
+    meta.isTech = isTech;
+    meta.isHp = isHp;
+    meta.isSturdy = isSturdy;
+    meta.isSwift = isSwift;
+    meta.isKae = isKae;
+    meta.isCoupon = isCoupon;
+    meta.isFamilyTrade = isFamilyTrade;
+
+    return meta;
+};
+
+// --- 공통 배지 및 특수속성 설명 생성 헬퍼 ---
+const renderEquipBadgesHtml = (m) => {
+    if (!m) return '';
+    const badges = [];
+
+    // 1. 가족거래 태그 (최우선 배치, 가장 돋보이는 강렬한 배색)
+    if (m.isFamilyTrade) {
+        badges.push(
+            `<span class="shrink-0 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-600 via-rose-600 to-red-500 text-white border border-rose-500 text-[10px] md:text-[11px] font-black tracking-tight shadow-xs whitespace-nowrap">가족거래</span>`
+        );
+    }
+
+    // 2. 기술
+    if (m.isTech) {
+        badges.push(
+            `<span class="shrink-0 px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-bold whitespace-nowrap">기술</span>`
+        );
+    }
+
+    // 3. 체력
+    if (m.isHp) {
+        badges.push(
+            `<span class="shrink-0 px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200 text-[10px] font-bold whitespace-nowrap">체력</span>`
+        );
+    }
+
+    // 4. 튼튼
+    if (m.isSturdy) {
+        badges.push(
+            `<span class="shrink-0 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold whitespace-nowrap">튼튼</span>`
+        );
+    }
+
+    // 5. 신속 / 쾌속
+    if (m.isSwift) {
+        const swiftLabel = m.isKae ? '쾌속' : '신속';
+        badges.push(
+            `<span class="shrink-0 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold whitespace-nowrap">${swiftLabel}</span>`
+        );
+    }
+
+    // 6. 쿠폰장비
+    if (m.isCoupon) {
+        badges.push(
+            `<span class="shrink-0 px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold whitespace-nowrap">쿠폰장비</span>`
+        );
+    }
+
+    return badges.join('');
+};
+
+const getSpecialAttrDesc = (m) => {
+    if (!m) return '일반';
+    const texts = [];
+    if (m.isFamilyTrade) texts.push('가족 거래 전용(2중 접두어 이상 계정 귀속)');
+    if (m.isTech) texts.push('기술 특화');
+    if (m.isHp) texts.push('체력 특화');
+    if (m.isSturdy) texts.push('튼튼한 장비(강화 성공률 상승)');
+    if (m.isSwift) texts.push(m.isKae ? '쾌속 장비(작업시간 단축)' : '신속 장비(작업시간 단축)');
+    if (m.isCoupon) texts.push('레알쿠폰 세트장비');
+    if (texts.length === 0) texts.push('일반 내구');
+    return texts.join(' · ');
 };
 
 // ============================================================================
@@ -290,7 +409,7 @@ const EQUIP_PARTNER_MAP = {
     // 의상 - 일반의상
     '셔츠': '튼셔츠',
     '일셔츠': '튼셔츠',
-    '튼셔츠': '일셔츠',
+    '튼셔츠': '셔츠',
     '일바지': '튼바지',
     '튼바지': '일바지',
 
@@ -328,6 +447,391 @@ const getEquipPartnerKey = (itemName) => {
     }
     return null;
 };
+
+// ============================================================================
+// ★ 장비 기본 스탯 및 1~10강 강화 상승 수치 시스템
+// ============================================================================
+const ENHANCE_ADD_STATS = {
+    // 의상 (옷) - 1~10강 공통 (기술 +1~36, 체력 +3~99)
+    clothes: {
+        hp:   [0, 3, 6, 12, 18, 24, 32, 42, 54, 69, 99],
+        tech: [0, 1, 2,  4,  6,  8, 11, 15, 20, 26, 36]
+    },
+    // 괭이 / 로터리 (밭 양분 최대치)
+    hoe: [0, 100, 250, 450, 750, 1150, 1650, 2250, 2950, 3800, 5000],
+    // 거름삽 / 퇴비 살포기 (양분 증가)
+    manure: [0, 10, 25, 45, 70, 100, 140, 190, 260, 360, 500],
+    // 모종삽 / 파종기 (생육 개선)
+    trowel: [0, 20, 50, 90, 140, 200, 280, 380, 520, 720, 1000],
+    // 물뿌리개 (물 적재량)
+    watering: [0, 1, 2, 4, 6, 9, 12, 15, 18, 22, 30],
+    // 낫 / 콤바인 (등급 개선)
+    sickle: [0, 20, 50, 90, 140, 200, 280, 380, 520, 720, 1000]
+};
+
+const EQUIP_BASE_STATS_DB = {
+    // --- 의상: 모자 ---
+    '일팬모': { hp: 115, tech: 24 },
+    '튼팬모': { hp: 115, tech: 24 },
+    '기팬모': { tech: 35 },
+    '체팬모': { hp: 173 },
+
+    '일헬':   { hp: 125, tech: 27 },
+    '튼헬':   { hp: 125, tech: 27 },
+    '기헬':   { tech: 40 },
+    '체헬':   { hp: 188 },
+
+    '일썬':   { hp: 135, tech: 30 },
+    '튼썬':   { hp: 135, tech: 30 },
+    '기썬':   { tech: 45 },
+    '체썬':   { hp: 203 },
+
+    '네온머리': { hp: 145, tech: 33 },
+    '튼네온머리': { hp: 145, tech: 33 },
+    '기네온머리': { tech: 50 },
+    '체네온머리': { hp: 218 },
+    '체메카머리': { hp: 218 },
+    '기메카닉':   { tech: 50 },
+
+    '기고마머리': { tech: 55 },
+    '튼기고마머리': { tech: 55 },
+    '체고마머리': { hp: 233 },
+    '기개굴모자': { tech: 45 },
+    '체개굴모자': { hp: 203 },
+    '기도련복건': { tech: 45 },
+    '체도련복건': { hp: 203 },
+
+    // --- 의상: 상의 ---
+    '일팬상': { hp: 165, tech: 36 },
+    '튼팬상': { hp: 165, tech: 36 },
+    '기팬상': { tech: 52 },
+    '체팬상': { hp: 248 },
+
+    '일슛':   { hp: 175, tech: 40 },
+    '튼슛':   { hp: 175, tech: 40 },
+    '기슛':   { tech: 58 },
+    '체슛':   { hp: 266 },
+
+    '셔츠':   { hp: 185, tech: 44 },
+    '일셔츠': { hp: 185, tech: 44 },
+    '튼셔츠': { hp: 185, tech: 44 },
+    '기셔츠': { tech: 64 },
+    '체셔츠': { hp: 284 },
+
+    '네온장갑': { hp: 195, tech: 48 },
+    '튼네온장갑': { hp: 195, tech: 48 },
+    '기네온장갑': { tech: 70 },
+    '체네온장갑': { hp: 302 },
+    '체자켓':   { hp: 302 },
+    '기자켓':   { tech: 70 },
+
+    '기고마상의': { tech: 76 },
+    '체고마상의': { hp: 320 },
+    '도련저고리': { hp: 185, tech: 44 },
+
+    // --- 의상: 하의 ---
+    '일팬하': { hp: 155, tech: 34 },
+    '튼팬하': { hp: 155, tech: 34 },
+    '기팬하': { tech: 50 },
+    '체팬하': { hp: 233 },
+
+    '일쫄':   { hp: 165, tech: 38 },
+    '튼쫄':   { hp: 165, tech: 38 },
+    '기쫄':   { tech: 56 },
+    '체쫄':   { hp: 248 },
+
+    '일바지': { hp: 175, tech: 42 },
+    '바지':   { hp: 175, tech: 42 },
+    '튼바지': { hp: 175, tech: 42 },
+    '기바지': { tech: 62 },
+    '체바지': { hp: 263 },
+
+    '네온부츠': { hp: 185, tech: 46 },
+    '튼네온부츠': { hp: 185, tech: 46 },
+    '기네온부츠': { tech: 68 },
+    '체네온부츠': { hp: 278 },
+    '체메카닉 바지': { hp: 278 },
+    '기메카닉 바지': { tech: 68 },
+
+    '기고마하의': { tech: 74 },
+    '기고마꼬리': { tech: 74 },
+    '체고마하의': { hp: 293 },
+    '체고마꼬리': { hp: 293 },
+    '체개굴하의': { hp: 263 },
+    '도련바지':   { hp: 175, tech: 42 },
+    '체도련바지': { hp: 263 },
+
+    // --- 농기구 & 농기계: 괭이 / 로터리 ---
+    '에로괭이':   { time: 4.0, hpSave: 14, fertMax: 5500 },
+    '튼에로괭이': { time: 4.0, hpSave: 14, fertMax: 5500 },
+    '크리괭이':   { time: 4.0, hpSave: 16, fertMax: 6000 },
+    '튼크리괭이': { time: 4.0, hpSave: 16, fertMax: 6000 },
+    '네온괭이':   { time: 4.0, hpSave: 16, fertMax: 6500 },
+    '이리스괭이': { time: 4.0, hpSave: 16, fertMax: 6000 },
+    '냥냥괭이':   { time: 2.5, hpSave: 16, fertMax: 7000 },
+    '다마':       { time: 4.0, hpSave: 12, fertMax: 3500 },
+    '튼다마':     { time: 4.0, hpSave: 12, fertMax: 3500 },
+    '일로':       { time: 2.5, hpSave: 14, fertMax: 2500 },
+    '중로':       { time: 2.0, hpSave: 17, fertMax: 5000 },
+    '대로':       { time: 1.8, hpSave: 19, fertMax: 5500 },
+    '크로':       { time: 1.6, hpSave: 19, fertMax: 6000 },
+
+    // --- 농기구 & 농기계: 거름삽 / 퇴비 살포기 ---
+    '에로거삽':   { time: 4.0, hpSave: 14, fertInc: 500 },
+    '튼에로거삽': { time: 4.0, hpSave: 14, fertInc: 500 },
+    '신에로거삽': { time: 3.0, hpSave: 14, fertInc: 500 },
+    '크리거삽':   { time: 4.0, hpSave: 16, fertInc: 550 },
+    '튼크리거삽': { time: 4.0, hpSave: 16, fertInc: 550 },
+    '신크리거삽': { time: 3.0, hpSave: 16, fertInc: 550 },
+    '네온거삽':   { time: 4.0, hpSave: 16, fertInc: 600 },
+    '튼네온거삽': { time: 4.0, hpSave: 16, fertInc: 600 },
+    '신네온거삽': { time: 3.0, hpSave: 16, fertInc: 600 },
+    '신냥거삽':   { time: 2.5, hpSave: 16, fertInc: 650 },
+    '일퇴':       { time: 2.5, hpSave: 14, fertInc: 300 },
+    '중퇴':       { time: 2.0, hpSave: 17, fertInc: 450 },
+    '대퇴':       { time: 1.8, hpSave: 19, fertInc: 500 },
+    '크퇴':       { time: 1.6, hpSave: 19, fertInc: 550 },
+
+    // --- 농기구 & 농기계: 모종삽 / 파종기 ---
+    '아프모':     { time: 4.0, hpSave: 13, grow: 900 },
+    '에로모삽':   { time: 4.0, hpSave: 14, grow: 1000 },
+    '크리모삽':   { time: 4.0, hpSave: 16, grow: 1100 },
+    '튼크리모삽': { time: 4.0, hpSave: 16, grow: 1100 },
+    '신크리모삽': { time: 3.0, hpSave: 16, grow: 1100 },
+    '네온모삽':   { time: 4.0, hpSave: 16, grow: 1200 },
+    '신네온모삽': { time: 3.0, hpSave: 16, grow: 1200 },
+    '이리모삽':   { time: 4.0, hpSave: 16, grow: 1100 },
+    '신이리모삽': { time: 3.0, hpSave: 16, grow: 1100 },
+    '일파':       { time: 2.5, hpSave: 14, grow: 400 },
+    '중파':       { time: 2.0, hpSave: 17, grow: 900 },
+    '대파':       { time: 1.8, hpSave: 19, grow: 1000 },
+    '크파':       { time: 1.6, hpSave: 19, grow: 1100 },
+
+    // --- 농기구: 물뿌리개 ---
+    '포세':       { time: 4.0, hpSave: 13, grow: 170, waterCap: 20 },
+    '신포세':     { time: 3.0, hpSave: 13, grow: 170, waterCap: 20 },
+    '에로물뿌':   { time: 4.0, hpSave: 14, grow: 180, waterCap: 22 },
+    '신에로물뿌': { time: 3.0, hpSave: 14, grow: 180, waterCap: 22 },
+    '크리물뿌':   { time: 4.0, hpSave: 16, grow: 190, waterCap: 22 },
+    '신크리물뿌': { time: 3.0, hpSave: 16, grow: 190, waterCap: 22 },
+    '네온물뿌':   { time: 4.0, hpSave: 16, grow: 200, waterCap: 22 },
+    '신네온물뿌': { time: 3.0, hpSave: 16, grow: 200, waterCap: 22 },
+    '신이리물뿌': { time: 3.0, hpSave: 16, grow: 190, waterCap: 22 },
+    '신냥물뿌':   { time: 2.5, hpSave: 16, grow: 210, waterCap: 22 },
+    '튼쾌냥물뿌': { time: 2.5, hpSave: 16, grow: 210, waterCap: 22 },
+
+    // --- 농기구 & 농기계: 낫 / 콤바인 ---
+    '크로낫':   { time: 4.0, hpSave: 13, grade: 900 },
+    '에로낫':   { time: 4.0, hpSave: 14, grade: 1000 },
+    '튼에로낫': { time: 4.0, hpSave: 14, grade: 1000 },
+    '크리낫':   { time: 4.0, hpSave: 16, grade: 1100 },
+    '튼크리낫': { time: 4.0, hpSave: 16, grade: 1100 },
+    '신크리낫': { time: 3.0, hpSave: 16, grade: 1100 },
+    '네온낫':   { time: 4.0, hpSave: 16, grade: 1200 },
+    '튼네온낫': { time: 4.0, hpSave: 16, grade: 1200 },
+    '신이리낫': { time: 3.0, hpSave: 16, grade: 1100 },
+    '냥냥낫':   { time: 2.5, hpSave: 16, grade: 1300 },
+    '일콤':     { time: 2.5, hpSave: 14, grade: 400 },
+    '중콤':     { time: 2.0, hpSave: 17, grade: 900 },
+    '대콤':     { time: 1.8, hpSave: 19, grade: 1000 },
+    '크콤':     { time: 1.6, hpSave: 19, grade: 1100 }
+};
+
+const getEquipBaseStats = (key, equipMeta) => {
+    const k = normalizeEquipKey(key);
+    if (EQUIP_BASE_STATS_DB[k]) return { ...EQUIP_BASE_STATS_DB[k] };
+
+    const partner = getEquipPartnerKey(k);
+    if (partner && EQUIP_BASE_STATS_DB[partner]) return { ...EQUIP_BASE_STATS_DB[partner] };
+
+    // 동적 추정 폴백
+    if (equipMeta) {
+        if (equipMeta.subType === '일반 의상' || equipMeta.subType === '쿠폰 의상') {
+            const isHat = equipMeta.part === '모자';
+            const isTop = equipMeta.part === '상의';
+            const baseHp = isHat ? 120 : (isTop ? 170 : 160);
+            const baseTech = isHat ? 26 : (isTop ? 38 : 36);
+            return { hp: baseHp, tech: baseTech };
+        }
+    }
+    return null;
+};
+
+// 기본 스탯 한 줄 요약 텍스트
+const formatEquipBaseStatsSummary = (stats, equipMeta) => {
+    if (!stats) return '';
+    const parts = [];
+
+    if (stats.hp !== undefined && stats.tech !== undefined) {
+        parts.push(`체력 ${stats.hp} · 기술 ${stats.tech}`);
+    } else if (stats.tech !== undefined) {
+        parts.push(`기술 ${stats.tech}`);
+    } else if (stats.hp !== undefined) {
+        parts.push(`체력 ${stats.hp}`);
+    }
+
+    if (stats.fertMax !== undefined) parts.push(`밭양분최대 ${stats.fertMax.toLocaleString()}`);
+    if (stats.fertInc !== undefined) parts.push(`양분증가 +${stats.fertInc.toLocaleString()}`);
+    if (stats.grow !== undefined)    parts.push(`생육개선 +${stats.grow.toLocaleString()}`);
+    if (stats.waterCap !== undefined) parts.push(`물적재량 ${stats.waterCap}`);
+    if (stats.grade !== undefined)   parts.push(`등급개선 +${stats.grade.toLocaleString()}`);
+
+    if (stats.hpSave !== undefined) parts.push(`체력절감 -${stats.hpSave}`);
+    if (stats.time !== undefined)   parts.push(`작업 ${stats.time.toFixed(1)}초`);
+
+    return parts.join(' | ');
+};
+
+// 특정 강화 단계(lvl)에서의 총 스탯 및 증가량 도출 (모든 의상 및 농기계/농기구 100% 지원)
+const getEquipEnhanceStatAtLevel = (stats, equipMeta, lvl) => {
+    if (!stats) return null;
+
+    if (lvl === 0) {
+        let displayShort = '';
+        if (stats.hp !== undefined && stats.tech !== undefined) {
+            displayShort = `체 ${stats.hp} · 기 ${stats.tech}`;
+        } else if (stats.tech !== undefined) {
+            displayShort = `기술 ${stats.tech}`;
+        } else if (stats.hp !== undefined) {
+            displayShort = `체력 ${stats.hp}`;
+        } else if (stats.fertMax !== undefined) {
+            displayShort = `양분 ${stats.fertMax.toLocaleString()}`;
+        } else if (stats.fertInc !== undefined) {
+            displayShort = `양분증가 +${stats.fertInc.toLocaleString()}`;
+        } else if (stats.grow !== undefined && stats.waterCap === undefined) {
+            displayShort = `생육 +${stats.grow.toLocaleString()}`;
+        } else if (stats.waterCap !== undefined) {
+            displayShort = `물 ${stats.waterCap}`;
+        } else if (stats.grade !== undefined) {
+            displayShort = `등급 +${stats.grade.toLocaleString()}`;
+        }
+        return { ...stats, addSummary: '', displayShort, isZero: true };
+    }
+
+    // 의상 (옷): 체력/기술 특화 의상도 강화 시 기술과 체력이 동시에 추가됨!
+    if (stats.hp !== undefined || stats.tech !== undefined) {
+        const baseHp = stats.hp || 0;
+        const baseTech = stats.tech || 0;
+        const addHp = ENHANCE_ADD_STATS.clothes.hp[lvl] || 0;
+        const addTech = ENHANCE_ADD_STATS.clothes.tech[lvl] || 0;
+        const totalHp = baseHp + addHp;
+        const totalTech = baseTech + addTech;
+
+        return {
+            hp: totalHp,
+            tech: totalTech,
+            addSummary: `기+${addTech} 체+${addHp}`,
+            displayShort: `체 ${totalHp} · 기 ${totalTech}`
+        };
+    }
+
+    // 괭이 / 로터리 (농기계 포함)
+    if (stats.fertMax !== undefined) {
+        const add = ENHANCE_ADD_STATS.hoe[lvl] || 0;
+        const total = stats.fertMax + add;
+        return {
+            fertMax: total,
+            addSummary: `+${add.toLocaleString()}`,
+            displayShort: `양분 ${total.toLocaleString()}`
+        };
+    }
+    // 거름삽 / 퇴비 살포기 (농기계 포함)
+    if (stats.fertInc !== undefined) {
+        const add = ENHANCE_ADD_STATS.manure[lvl] || 0;
+        const total = stats.fertInc + add;
+        return {
+            fertInc: total,
+            addSummary: `+${add.toLocaleString()}`,
+            displayShort: `양분증가 +${total.toLocaleString()}`
+        };
+    }
+    // 모종삽 / 파종기 (크파 등 농기계 포함)
+    if (stats.grow !== undefined && stats.waterCap === undefined) {
+        const add = ENHANCE_ADD_STATS.trowel[lvl] || 0;
+        const total = stats.grow + add;
+        return {
+            grow: total,
+            addSummary: `+${add.toLocaleString()}`,
+            displayShort: `생육 +${total.toLocaleString()}`
+        };
+    }
+    // 물뿌리개
+    if (stats.waterCap !== undefined) {
+        const add = ENHANCE_ADD_STATS.watering[lvl] || 0;
+        const total = stats.waterCap + add;
+        return {
+            waterCap: total,
+            grow: stats.grow,
+            addSummary: `+${add}`,
+            displayShort: `물 ${total} (+${add})`
+        };
+    }
+    // 낫 / 콤바인 (크콤 등 농기계 포함)
+    if (stats.grade !== undefined) {
+        const add = ENHANCE_ADD_STATS.sickle[lvl] || 0;
+        const total = stats.grade + add;
+        return {
+            grade: total,
+            addSummary: `+${add.toLocaleString()}`,
+            displayShort: `등급 +${total.toLocaleString()}`
+        };
+    }
+
+    return null;
+};
+
+// 1~10강 전체 스탯 테이블 생성기 (모든 장비·농기계 공통, 상시 노출)
+const buildAllEnhanceStatsTableHtml = (stats, equipMeta) => {
+    if (!stats) return '';
+
+    const levels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const colsHtml = levels.map(lvl => {
+        const s = getEquipEnhanceStatAtLevel(stats, equipMeta, lvl);
+        if (!s) return '';
+        const isHighlight = lvl === 5 || lvl === 7 || lvl === 9;
+        const isMax = lvl === 10;
+        const bgBorder = isMax
+            ? 'bg-amber-50 border-amber-300 shadow-2xs'
+            : (isHighlight ? 'bg-indigo-50/80 border-indigo-200' : 'bg-white border-gray-100');
+
+        return `
+            <div class="flex-shrink-0 min-w-[74px] text-center p-1.5 rounded-lg border ${bgBorder} flex flex-col justify-between">
+                <div class="text-[10px] font-bold ${isMax ? 'text-amber-700' : (isHighlight ? 'text-indigo-700' : 'text-gray-500')}">
+                    ${lvl === 0 ? '기본 (0강)' : `+${lvl}강`}
+                </div>
+                <div class="my-1">
+                    <div class="text-[11px] font-extrabold ${isMax ? 'text-amber-800' : 'text-blue-700'}">
+                        ${lvl === 0 ? '-' : (s.addSummary || '-')}
+                    </div>
+                    <div class="text-[10px] text-gray-700 font-semibold">
+                        ${s.displayShort || '-'}
+                    </div>
+                </div>
+                <div class="text-[9px] text-gray-400">
+                    ${lvl === 0 ? '기본값' : '누적합'}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="mt-3 pt-2.5 border-t border-blue-200/60">
+            <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-extrabold text-indigo-950">강화 레벨별 스탯 증가량 & 누적 수치</span>
+                    <span class="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px] font-bold">1~10강</span>
+                </div>
+                <span class="text-[10px] text-gray-400 font-medium">가로 스크롤 가능 →</span>
+            </div>
+            <div class="p-2 bg-blue-50/40 rounded-lg border border-indigo-100/80 shadow-inner overflow-x-auto">
+                <div class="flex items-stretch gap-1.5 min-w-max pb-0.5">
+                    ${colsHtml}
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 
 
 // ============================================================================
@@ -918,69 +1422,94 @@ const optimizeEnhancementExact = ({ l, d, e, u, s7, s8, s9, s10, reaEok, stone39
     return bestCfg;
 };
 
-// 정렬 알고리즘: 빈도순(거래량순) vs ㄱㄴㄷ순(한국어 가나다순 - 줄임말 기준)
+// 정렬 알고리즘: 빈도순, ㄱㄴㄷ순, ㄱㄴㄷ 역순, 레벨제한순(장비 전용), 레벨제한 역순(장비 전용)
 const sortItemsOrVariants = (list, mode = currentSortMode) => {
     if (!Array.isArray(list)) return [];
     if (mode === 'korean') {
         return list.slice().sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true }));
     }
-    // 기본값: 빈도순 (거래 건수 내림차순, 동률 시 가나다순)
+    if (mode === 'korean_desc') {
+        return list.slice().sort((a, b) => b.name.localeCompare(a.name, 'ko', { numeric: true }));
+    }
+    if (mode === 'level_asc') {
+        return list.slice().sort((a, b) => {
+            const lvA = a.meta?.level !== undefined ? a.meta.level : 999;
+            const lvB = b.meta?.level !== undefined ? b.meta.level : 999;
+            if (lvA !== lvB) return lvA - lvB;
+            return (b.count - a.count) || a.name.localeCompare(b.name, 'ko', { numeric: true });
+        });
+    }
+    if (mode === 'level_desc') {
+        return list.slice().sort((a, b) => {
+            const lvA = a.meta?.level !== undefined ? a.meta.level : -1;
+            const lvB = b.meta?.level !== undefined ? b.meta.level : -1;
+            if (lvA !== lvB) return lvB - lvA;
+            return (b.count - a.count) || a.name.localeCompare(b.name, 'ko', { numeric: true });
+        });
+    }
+    // 기본값: freq (빈도순 - 거래 건수 내림차순, 동률 시 가나다순)
     return list.slice().sort((a, b) => (b.count - a.count) || a.name.localeCompare(b.name, 'ko', { numeric: true }));
 };
 
 const updateSortUI = () => {
-    const isFreq = currentSortMode === 'freq';
+    // 액세서리는 렙제가 없으므로 레벨제한순, 레벨제한 역순 제외
+    const availableSortModes = SORT_MODES.filter(m => !m.equipOnly || currentCategory === 'equip');
+    if (!availableSortModes.some(m => m.key === currentSortMode)) {
+        currentSortMode = 'freq';
+    }
 
     // 1. 상단바 드롭다운 버튼 텍스트
     const sortText = document.getElementById('current-sort-text');
     if (sortText) {
-        sortText.textContent = isFreq ? '정렬: 빈도순' : '정렬: ㄱㄴㄷ순';
+        const curObj = availableSortModes.find(m => m.key === currentSortMode) || availableSortModes[0];
+        sortText.textContent = `정렬: ${curObj.label}`;
     }
 
-    // 2. 상단바 드롭다운 내부 체크마크 및 액티브 스타일
-    const checkFreq = document.getElementById('check-freq');
-    const checkKorean = document.getElementById('check-korean');
-    const btnFreq = document.querySelector('.sort-select-option[data-sort="freq"]');
-    const btnKorean = document.querySelector('.sort-select-option[data-sort="korean"]');
+    // 2. 상단바 드롭다운 옵션 리스트 동적 렌더링
+    const sortDropdownOptions = document.getElementById('sort-dropdown-options');
+    if (sortDropdownOptions) {
+        sortDropdownOptions.innerHTML = availableSortModes.map(m => {
+            const isActive = m.key === currentSortMode;
+            return `
+                <button type="button" class="sort-select-option w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-blue-50 flex items-center justify-between transition ${isActive ? 'text-blue-600 bg-blue-50/50 font-bold' : 'text-gray-700'}" data-sort="${m.key}">
+                    <span>${m.label} <span class="text-[10px] text-gray-400 font-normal">(${m.desc})</span></span>
+                    <span class="sort-check text-blue-600 font-bold ${isActive ? '' : 'hidden'}">✓</span>
+                </button>
+            `;
+        }).join('');
 
-    if (checkFreq) checkFreq.classList.toggle('hidden', !isFreq);
-    if (checkKorean) checkKorean.classList.toggle('hidden', isFreq);
-
-    if (btnFreq) {
-        if (isFreq) {
-            btnFreq.classList.add('text-blue-600', 'bg-blue-50/50');
-            btnFreq.classList.remove('text-gray-700');
-        } else {
-            btnFreq.classList.remove('text-blue-600', 'bg-blue-50/50');
-            btnFreq.classList.add('text-gray-700');
-        }
+        sortDropdownOptions.querySelectorAll('.sort-select-option').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                setSortMode(btn.dataset.sort);
+                toggleSortDropdown(true);
+            };
+        });
     }
 
-    if (btnKorean) {
-        if (!isFreq) {
-            btnKorean.classList.add('text-blue-600', 'bg-blue-50/50');
-            btnKorean.classList.remove('text-gray-700');
-        } else {
-            btnKorean.classList.remove('text-blue-600', 'bg-blue-50/50');
-            btnKorean.classList.add('text-gray-700');
-        }
-    }
+    // 3. 사이드바 정렬 버튼 그리드 동적 렌더링 (#sidebar-sort-group)
+    const sidebarSortGroup = document.getElementById('sidebar-sort-group');
+    if (sidebarSortGroup) {
+        sidebarSortGroup.innerHTML = availableSortModes.map(m => {
+            const isActive = m.key === currentSortMode;
+            const cls = isActive
+                ? 'bg-blue-600 text-white font-bold shadow-xs'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium';
+            const spanCls = (m.key === 'freq') ? 'col-span-2' : '';
+            return `<button type="button" class="sidebar-sort-btn py-1.5 px-2 rounded-lg text-xs transition text-center ${spanCls} ${cls}" data-sort="${m.key}">${m.label}</button>`;
+        }).join('');
 
-    // 3. 사이드바 정렬 버튼 동기화
-    document.querySelectorAll('.sidebar-sort-btn').forEach(btn => {
-        const mode = btn.dataset.sort;
-        if (mode === currentSortMode) {
-            btn.classList.add('active', 'bg-blue-600', 'text-white');
-            btn.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
-        } else {
-            btn.classList.remove('active', 'bg-blue-600', 'text-white');
-            btn.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
-        }
-    });
+        sidebarSortGroup.querySelectorAll('.sidebar-sort-btn').forEach(btn => {
+            btn.onclick = () => {
+                setSortMode(btn.dataset.sort);
+            };
+        });
+    }
 };
 
 const setSortMode = (mode) => {
-    if (mode !== 'freq' && mode !== 'korean') return;
+    const availableSortModes = SORT_MODES.filter(m => !m.equipOnly || currentCategory === 'equip');
+    if (!availableSortModes.some(m => m.key === mode)) return;
     currentSortMode = mode;
     try {
         localStorage.setItem('farm_sort_mode', mode);
@@ -1069,6 +1598,7 @@ const loadData = () => {
             renderFilters();
             renderGrid();
             renderGachaEVSection();
+            renderClothesUpgradeSection();
         })
         .catch(() => {
             if (typeof window.FARM_DATA !== 'undefined') {
@@ -1141,12 +1671,651 @@ const updateLastUpdateUI = (lines) => {
     }
 };
 
-// 유효 옵션 악세서리 화이트리스트 (잡악세는 노출 제외)
+// ============================================================================
+// 4-1. 액세서리(장신구) 상세 메타데이터 & 효과 정보 DB
+// ============================================================================
+const ACC_META_DB = {
+    // --- 1. 바람의 액세서리 (오로지 금 장신구만 존재, 다이아/은 없음, 배경 하늘색) ---
+    '바씨': {
+        officialName: '바람의 씨앗 액세서리',
+        group: '바람',
+        tags: ['바람'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '씨앗 뿌리기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '씨앗을 뿌릴 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동 (오로지 금 등급만 존재)' },
+        desc: '특정 작업을 수행할 때 순간이동합니다. 오로지 금 장신구만 있으며, 다이아와 은 등급은 없습니다. (배경색: 하늘색)'
+    },
+    '바새': {
+        officialName: '바람의 새싹 액세서리',
+        group: '바람',
+        tags: ['바람'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '모종 심기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '모종을 심을 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동 (오로지 금 등급만 존재)' },
+        desc: '모종을 심을 때 순간이동합니다. 오로지 금 장신구만 있습니다. (배경색: 하늘색)'
+    },
+    '바발': {
+        officialName: '바람의 발톱 액세서리',
+        group: '바람',
+        tags: ['바람'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '밭 갈기 (괭이질)',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '밭을 갈 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동 (오로지 금 등급만 존재)' },
+        desc: '밭을 갈 때 순간이동합니다. 오로지 금 장신구만 있습니다. (배경색: 하늘색)'
+    },
+    '바손': {
+        officialName: '바람의 손톱 액세서리',
+        group: '바람',
+        tags: ['바람'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '밭 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '밭을 갈아엎을 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동 (오로지 금 등급만 존재)' },
+        desc: '밭을 갈아엎을 때 순간이동합니다. 오로지 금 장신구만 있습니다. (배경색: 하늘색)'
+    },
+    '바흙': {
+        officialName: '바람의 흙 액세서리',
+        group: '바람',
+        tags: ['바람'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '밑거름 주기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '밑거름을 줄 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동 (오로지 금 등급만 존재)' },
+        desc: '밑거름을 줄 때 순간이동합니다. 오로지 금 장신구만 있습니다. (배경색: 하늘색)'
+    },
+    '바진': {
+        officialName: '바람의 진액 액세서리',
+        group: '바람',
+        tags: ['바람'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '덧거름 주기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '덧거름을 줄 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동 (오로지 금 등급만 존재)' },
+        desc: '덧거름을 줄 때 순간이동합니다. 오로지 금 장신구만 있습니다. (배경색: 하늘색)'
+    },
+    '바칼': {
+        officialName: '바람의 칼날 액세서리',
+        group: '바람',
+        tags: ['바람'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '작물 수확 (낫질)',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '작물을 수확할 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동 (오로지 금 등급만 존재)' },
+        desc: '작물을 수확할 때 순간이동합니다. 오로지 금 장신구만 있습니다. (배경색: 하늘색)'
+    },
+    '바물': {
+        officialName: '바람의 물방울 액세서리',
+        group: '바람',
+        tags: ['바람'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '물 주기 (물뿌리개)',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '물을 줄 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동 (오로지 금 등급만 존재)' },
+        desc: '물을 줄 때 순간이동합니다. 오로지 금 장신구만 있습니다. (배경색: 하늘색)'
+    },
+    '바생': {
+        officialName: '바람의 생육 액세서리',
+        group: '바람',
+        tags: ['바람'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '생육 개선제 살포',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '생육 개선제를 뿌릴 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동 (오로지 금 등급만 존재)' },
+        desc: '생육 개선제를 뿌릴 때 순간이동합니다. 오로지 금 장신구만 있습니다. (배경색: 하늘색)'
+    },
+
+    // --- 2. 활력의 액세서리 (다이아/금/은, 배경 빨간색, 체력 절감) ---
+    '활씨': {
+        officialName: '활력의 씨앗 액세서리',
+        group: '활력',
+        tags: ['활력'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-red-100 text-red-800 border-red-200',
+        target: '씨앗 뿌리기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '씨앗을 뿌릴 때 체력을 절감해 줍니다.',
+        grades: { '다': '체력 -8 절감', '금': '체력 -4 절감', '은': '체력 -2 절감' },
+        desc: '특정 작업을 수행할 때 체력을 절감해 줍니다. 다이아 8, 금 4, 은 2 체력을 아낄 수 있습니다. (배경색: 빨간색)'
+    },
+    '활생': {
+        officialName: '활력의 생육 액세서리',
+        group: '활력',
+        tags: ['활력'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-red-100 text-red-800 border-red-200',
+        target: '생육 개선제 살포',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '생육 개선제를 뿌릴 때 체력을 절감해 줍니다.',
+        grades: { '다': '체력 -8 절감', '금': '체력 -4 절감', '은': '체력 -2 절감' },
+        desc: '생육 개선제를 뿌릴 때 체력을 아낄 수 있습니다. (다이아 -8, 금 -4, 은 -2)'
+    },
+
+    // --- 3. 신속의 액세서리 (다이아/금/은, 배경 남색, 작업 시간 단축) ---
+    '신씨': {
+        officialName: '신속의 씨앗 액세서리',
+        group: '신속',
+        tags: ['신속'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+        target: '씨앗 뿌리기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '씨앗을 뿌릴 때 시간을 줄여 줍니다.',
+        grades: { '다': '작업시간 -3초 단축', '금': '작업시간 -2초 단축', '은': '작업시간 -1초 단축' },
+        desc: '특정 작업을 수행할 때 시간을 줄여 줍니다. 다이아 3초, 금 2초, 은 1초 단축됩니다. (배경색: 남색)'
+    },
+    '신생': {
+        officialName: '신속의 생육 액세서리',
+        group: '신속',
+        tags: ['신속'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+        target: '생육 개선제 살포',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '생육 개선제를 뿌릴 때 시간을 줄여 줍니다.',
+        grades: { '다': '작업시간 -3초 단축', '금': '작업시간 -2초 단축', '은': '작업시간 -1초 단축' },
+        desc: '생육 개선제를 뿌릴 때 작업 시간을 대폭 줄여 줍니다. (다이아 -3초, 금 -2초, 은 -1초)'
+    },
+
+    // --- 4. 재료드롭의 액세서리 (다이아 100%, 금 50%, 은 25%, 배경 주황색) ---
+    '고미': {
+        officialName: '고농축 미네랄의 액세서리',
+        group: '재료',
+        tags: ['재료'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-amber-100 text-amber-900 border-amber-200',
+        target: '작물 수확 또는 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '수확 또는 갈아엎기 시 나오는 아이템을 고농축 미네랄로 변환합니다.',
+        grades: { '다': '변환 확률 100%', '금': '변환 확률 50%', '은': '변환 확률 25%' },
+        desc: '작물을 갈아엎거나 수확할 때 나오는 아이템을 정해진 재료로 변환시켜 줍니다. 다이아는 100% 확정 변환입니다. (배경색: 주황색)'
+    },
+    '미네랄': {
+        officialName: '미네랄의 액세서리',
+        group: '재료',
+        tags: ['재료'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-amber-100 text-amber-900 border-amber-200',
+        target: '작물 수확 또는 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '수확 또는 갈아엎기 시 나오는 아이템을 미네랄로 변환합니다.',
+        grades: { '다': '변환 확률 100%', '금': '변환 확률 50%', '은': '변환 확률 25%' },
+        desc: '수확 또는 갈아엎기 시 나오는 아이템을 미네랄로 변환시켜 줍니다. (다이아 100%, 금 50%, 은 25%)'
+    },
+    '시균': {
+        officialName: '시간의 균열의 액세서리',
+        group: '재료',
+        tags: ['재료'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-amber-100 text-amber-900 border-amber-200',
+        target: '작물 수확 또는 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '수확 또는 갈아엎기 시 나오는 아이템을 시간의 균열로 변환합니다.',
+        grades: { '다': '변환 확률 100%', '금': '변환 확률 50%', '은': '변환 확률 25%' },
+        desc: '수확 또는 갈아엎기 시 나오는 아이템을 시간의 균열로 변환시켜 줍니다. (다이아 100%, 금 50%, 은 25%)'
+    },
+    '농아': {
+        officialName: '농축 발효 아미노산의 액세서리',
+        group: '재료',
+        tags: ['재료'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-amber-100 text-amber-900 border-amber-200',
+        target: '작물 수확 또는 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '수확 또는 갈아엎기 시 나오는 아이템을 농축 발효 아미노산으로 변환합니다.',
+        grades: { '다': '변환 확률 100%', '금': '변환 확률 50%', '은': '변환 확률 25%' },
+        desc: '수확 또는 갈아엎기 시 나오는 아이템을 농축 발효 아미노산으로 변환시켜 줍니다. (다이아 100%, 금 50%, 은 25%)'
+    },
+    '아미노산': {
+        officialName: '아미노산의 액세서리',
+        group: '재료',
+        tags: ['재료'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-amber-100 text-amber-900 border-amber-200',
+        target: '작물 수확 또는 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '수확 또는 갈아엎기 시 나오는 아이템을 아미노산으로 변환합니다.',
+        grades: { '다': '변환 확률 100%', '금': '변환 확률 50%', '은': '변환 확률 25%' },
+        desc: '수확 또는 갈아엎기 시 나오는 아이템을 아미노산으로 변환시켜 줍니다. (다이아 100%, 금 50%, 은 25%)'
+    },
+    '키토': {
+        officialName: '키토산의 액세서리',
+        group: '재료',
+        tags: ['재료'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-amber-100 text-amber-900 border-amber-200',
+        target: '작물 수확 또는 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '수확 또는 갈아엎기 시 나오는 아이템을 키토산으로 변환합니다.',
+        grades: { '다': '변환 확률 100%', '금': '변환 확률 50%', '은': '변환 확률 25%' },
+        desc: '수확 또는 갈아엎기 시 나오는 아이템을 키토산으로 변환시켜 줍니다. (다이아 100%, 금 50%, 은 25%)'
+    },
+    '앰플': {
+        officialName: '천연 호르몬 앰플의 액세서리',
+        group: '재료',
+        tags: ['재료'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-amber-100 text-amber-900 border-amber-200',
+        target: '작물 수확 또는 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '수확 또는 갈아엎기 시 나오는 아이템을 천연 호르몬 앰플로 변환합니다.',
+        grades: { '다': '변환 확률 100%', '금': '변환 확률 50%', '은': '변환 확률 25%' },
+        desc: '수확 또는 갈아엎기 시 나오는 아이템을 천연 호르몬 앰플로 변환시켜 줍니다. (다이아 100%, 금 50%, 은 25%)'
+    },
+    '타우': {
+        officialName: '고농축 타우린의 액세서리',
+        group: '재료',
+        tags: ['재료'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-amber-100 text-amber-900 border-amber-200',
+        target: '작물 수확 또는 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '수확 또는 갈아엎기 시 나오는 아이템을 고농축 타우린으로 변환합니다.',
+        grades: { '다': '변환 확률 100%', '금': '변환 확률 50%', '은': '변환 확률 25%' },
+        desc: '수확 또는 갈아엎기 시 나오는 아이템을 고농축 타우린으로 변환시켜 줍니다. (다이아 100%, 금 50%, 은 25%)'
+    },
+    '효소': {
+        officialName: '효소의 액세서리',
+        group: '재료',
+        tags: ['재료'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-amber-100 text-amber-900 border-amber-200',
+        target: '작물 수확 또는 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '수확 또는 갈아엎기 시 나오는 아이템을 효소로 변환합니다.',
+        grades: { '다': '변환 확률 100%', '금': '변환 확률 50%', '은': '변환 확률 25%' },
+        desc: '수확 또는 갈아엎기 시 나오는 아이템을 효소로 변환시켜 줍니다. (다이아 100%, 금 50%, 은 25%)'
+    },
+
+    // --- 5. 발굴의 액세서리 (다 50%, 금 20%, 은 10%, 배경 갈색) ---
+    '발굴': {
+        officialName: '발굴의 액세서리',
+        group: '발굴',
+        tags: ['발굴'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-amber-200 text-amber-950 border-amber-300',
+        target: '작물 수확 또는 갈아엎기',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '작물을 갈아엎거나 수확할 때 나오는 아이템을 일정 확률로 1개 추가합니다.',
+        grades: { '다': '추가 획득 확률 50%', '금': '추가 획득 확률 20%', '은': '추가 획득 확률 10%' },
+        desc: '작물을 갈아엎거나 수확할 때 나오는 아이템을 일정 확률에 따라 하나 추가시켜 줍니다. 다이아 50%, 금 20%, 은 10%입니다. (배경색: 갈색)'
+    },
+
+    // --- 6. 하루 경험의 액세서리 (다 200%, 금 100%, 은 50%, 배경 분홍색) ---
+    '하경': {
+        officialName: '하루 경험의 액세서리',
+        group: '하레',
+        tags: ['하레'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-pink-100 text-pink-800 border-pink-200',
+        target: '일일 퀘스트 성공',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '일일 퀘스트 성공 시 제공하는 경험치를 추가 제공합니다.',
+        grades: { '다': '경험치 +200% 추가', '금': '경험치 +100% 추가', '은': '경험치 +50% 추가' },
+        desc: '일일 퀘스트 성공 시 제공하는 경험치를 추가로 제공합니다. 다이아는 200%, 금은 100%, 은은 50%의 경험치를 추가해 줍니다. (배경색: 분홍색)'
+    },
+
+    // --- 7. 하루 레알의 액세서리 (다 3개, 금 2개, 은 1개, 배경 초록색) ---
+    '하레': {
+        officialName: '하루 레알의 액세서리',
+        group: '하레',
+        tags: ['하레'],
+        box: '쥬얼리박 (77레알)',
+        colorBadge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        target: '일일 퀘스트 성공',
+        equipGuide: '목걸이 / 반지 동일 기능',
+        effectSummary: '일일 퀘스트 성공 시 제공하는 레알을 추가 제공합니다.',
+        grades: { '다': '레알 +3개 추가', '금': '레알 +2개 추가', '은': '레알 +1개 추가' },
+        desc: '일일 퀘스트 성공 시 제공하는 레알을 추가로 제공합니다. 다이아는 3개, 금은 2개, 은은 1개의 레알을 추가해 줍니다. (배경색: 초록색)'
+    },
+
+    // --- 8. 친환경농장 재료드롭 액세서리 (에코, 은 10%, 금 20%, 다 50%) ---
+    'EM': {
+        officialName: 'EM발효액의 액세서리',
+        group: '친환경 재료',
+        tags: ['에코', '재료'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-teal-100 text-teal-800 border-teal-200',
+        target: '친환경농장 작업',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '친환경농장에서 필요한 EM발효액 드롭률을 높여 줍니다.',
+        grades: { '다': '드롭률 +50%', '금': '드롭률 +20%', '은': '드롭률 +10%' },
+        desc: '친환경농장에서만 기능이 발동됩니다. (은 10%, 금 20%, 다이아 50%)'
+    },
+    '이리응애': {
+        officialName: '이리응애 알의 액세서리',
+        group: '친환경 재료',
+        tags: ['에코', '재료'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-teal-100 text-teal-800 border-teal-200',
+        target: '친환경농장 작업',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '친환경농장에서 이리응애 알 드롭률을 높여 줍니다.',
+        grades: { '다': '드롭률 +50%', '금': '드롭률 +20%', '은': '드롭률 +10%' },
+        desc: '친환경농장에서만 기능이 발동됩니다. (은 10%, 금 20%, 다이아 50%)'
+    },
+    '천연방제균': {
+        officialName: '천연방제균의 액세서리',
+        group: '친환경 재료',
+        tags: ['에코', '재료'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-teal-100 text-teal-800 border-teal-200',
+        target: '친환경농장 작업',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '친환경농장에서 천연방제균 드롭률을 높여 줍니다.',
+        grades: { '다': '드롭률 +50%', '금': '드롭률 +20%', '은': '드롭률 +10%' },
+        desc: '친환경농장에서만 기능이 발동됩니다. (은 10%, 금 20%, 다이아 50%)'
+    },
+    '무당벌레알': {
+        officialName: '무당벌레 알의 액세서리',
+        group: '친환경 재료',
+        tags: ['에코', '재료'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-teal-100 text-teal-800 border-teal-200',
+        target: '친환경농장 작업',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '친환경농장에서 무당벌레 알 드롭률을 높여 줍니다.',
+        grades: { '다': '드롭률 +50%', '금': '드롭률 +20%', '은': '드롭률 +10%' },
+        desc: '친환경농장에서만 기능이 발동됩니다. (은 10%, 금 20%, 다이아 50%)'
+    },
+    '먹이응애': {
+        officialName: '먹이응애의 액세서리',
+        group: '친환경 재료',
+        tags: ['에코', '재료'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-teal-100 text-teal-800 border-teal-200',
+        target: '친환경농장 작업',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '친환경농장에서 먹이응애 드롭률을 높여 줍니다.',
+        grades: { '다': '드롭률 +50%', '금': '드롭률 +20%', '은': '드롭률 +10%' },
+        desc: '친환경농장에서만 기능이 발동됩니다. (은 10%, 금 20%, 다이아 50%)'
+    },
+    '먹이진딧물': {
+        officialName: '먹이진딧물의 액세서리',
+        group: '친환경 재료',
+        tags: ['에코', '재료'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-teal-100 text-teal-800 border-teal-200',
+        target: '친환경농장 작업',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '친환경농장에서 먹이진딧물 드롭률을 높여 줍니다.',
+        grades: { '다': '드롭률 +50%', '금': '드롭률 +20%', '은': '드롭률 +10%' },
+        desc: '친환경농장에서만 기능이 발동됩니다. (은 10%, 금 20%, 다이아 50%)'
+    },
+    '고효': {
+        officialName: '고농축 효소의 액세서리',
+        group: '친환경 재료',
+        tags: ['에코', '재료'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-teal-100 text-teal-800 border-teal-200',
+        target: '친환경농장 작업',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '친환경농장에서 고농축 효소 드롭률을 높여 줍니다.',
+        grades: { '다': '드롭률 +50%', '금': '드롭률 +20%', '은': '드롭률 +10%' },
+        desc: '친환경농장에서만 기능이 발동됩니다. (은 10%, 금 20%, 다이아 50%)'
+    },
+    '미생물방제균': {
+        officialName: '미생물방제제의 액세서리',
+        group: '친환경 재료',
+        tags: ['에코', '재료'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-teal-100 text-teal-800 border-teal-200',
+        target: '친환경농장 작업',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '친환경농장에서 미생물방제제 드롭률을 높여 줍니다.',
+        grades: { '다': '드롭률 +50%', '금': '드롭률 +20%', '은': '드롭률 +10%' },
+        desc: '친환경농장에서만 기능이 발동됩니다. (은 10%, 금 20%, 다이아 50%)'
+    },
+    '농축유산균': {
+        officialName: '농축 유산균의 액세서리',
+        group: '친환경 재료',
+        tags: ['에코', '재료'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-teal-100 text-teal-800 border-teal-200',
+        target: '친환경농장 작업',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '친환경농장에서 농축 유산균 드롭률을 높여 줍니다.',
+        grades: { '다': '드롭률 +50%', '금': '드롭률 +20%', '은': '드롭률 +10%' },
+        desc: '친환경농장에서만 기능이 발동됩니다. (은 10%, 금 20%, 다이아 50%)'
+    },
+    '진디벌': {
+        officialName: '진디벌 알의 액세서리',
+        group: '친환경 재료',
+        tags: ['에코', '재료'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-teal-100 text-teal-800 border-teal-200',
+        target: '친환경농장 작업',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '친환경농장에서 진디벌 알 드롭률을 높여 줍니다.',
+        grades: { '다': '드롭률 +50%', '금': '드롭률 +20%', '은': '드롭률 +10%' },
+        desc: '친환경농장에서만 기능이 발동됩니다. (은 10%, 금 20%, 다이아 50%)'
+    },
+
+    // --- 9. 친환경 신속 & 친환경 바람 (에코 장신구, 드론 등장으로 갈갈 시세 형성) ---
+    '신치': {
+        officialName: '신속의 치유 액세서리',
+        group: '친환경 신속',
+        tags: ['에코', '신속'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+        target: '방제제 / 고추씨추출액 살포',
+        equipGuide: '금 세트 착용 권장 (다이아는 세트 비추천)',
+        effectSummary: '방제제와 고추씨추출액을 뿌릴 때 걸리는 시간을 줄여 줍니다.',
+        grades: { '금': '세트 착용 시 3.7초 감축 (모션 감안, 표기 4초)', '다': '시간 3.0초 감축', '은': '시간 감축' },
+        desc: '방제제와 고추씨추출액을 뿌릴 때 시간이 절약됩니다. 금 세트는 3.7초 감축되며 다이아는 3초 감축하므로 다이아는 세트 비추천. 드론 등장 후 갈갈 가격에 거래됩니다.'
+    },
+    '신살': {
+        officialName: '신속의 살충 액세서리',
+        group: '친환경 신속',
+        tags: ['에코', '신속'],
+        box: '에코 쥬얼리박 (77레알)',
+        colorBadge: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+        target: '천적생물 방사',
+        equipGuide: '금 세트 착용 권장 (다이아는 세트 비추천)',
+        effectSummary: '천적생물을 뿌릴 때 걸리는 시간을 줄여 줍니다.',
+        grades: { '금': '세트 착용 시 3.7초 감축 (모션 감안, 표기 4초)', '다': '시간 3.0초 감축', '은': '시간 감축' },
+        desc: '천적생물을 뿌릴 때 시간이 절약됩니다. 금 세트는 3.7초 감축되며 다이아는 3초 감축하므로 다이아는 세트 비추천. 드론 등장 후 갈갈 가격에 거래됩니다.'
+    },
+    '바치': {
+        officialName: '바람의 치유 액세서리 (바치)',
+        group: '친환경 바람',
+        tags: ['에코', '바람'],
+        box: '듀얼리박 (265레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '방제제 / 고추씨추출액 살포',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '방제제와 고추씨추출액을 뿌릴 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동' },
+        desc: '방제제와 고추씨추출액을 뿌릴 때 순간이동합니다. 드론 등장 후 갈갈 가격에 거래됩니다.'
+    },
+    '바살': {
+        officialName: '바람의 살충 액세서리 (바살)',
+        group: '친환경 바람',
+        tags: ['에코', '바람'],
+        box: '듀얼리박 (265레알)',
+        colorBadge: 'bg-sky-100 text-sky-800 border-sky-200',
+        target: '천적생물 방사',
+        equipGuide: '친환경농장 전용',
+        effectSummary: '천적생물을 뿌릴 때 순간이동합니다.',
+        grades: { '금': '순간이동 발동' },
+        desc: '천적생물을 뿌릴 때 순간이동합니다. 드론 등장 후 갈갈 가격에 거래됩니다.'
+    },
+
+    // --- 10. 특수 & 12지신 기념 액세서리 ---
+    '찰나': {
+        officialName: '찰나의 발걸음 액세서리',
+        group: '특수',
+        tags: ['특수'],
+        box: '듀얼리박 (265레알)',
+        colorBadge: 'bg-purple-100 text-purple-800 border-purple-200',
+        target: '밭과 밭 사이 이동',
+        equipGuide: '세트 착용 시 효율 극대화',
+        effectSummary: '밭과 밭 사이를 이동할 때 시간을 절감시켜 줍니다.',
+        grades: { '다': '이동시간 대폭 절감', '금': '이동시간 절감', '은': '이동시간 소폭 절감' },
+        desc: '밭과 밭 사이를 이동할 때 시간을 절감시켜 주며 은, 금, 다이아 모두 세트 착용 시 효율이 좋습니다.'
+    },
+    '다그닥': {
+        officialName: '다그닥 액세서리',
+        group: '특수',
+        tags: ['특수'],
+        box: '이벤트 / 행사',
+        colorBadge: 'bg-purple-100 text-purple-800 border-purple-200',
+        target: '농장 이동',
+        equipGuide: '이동속도 증가',
+        effectSummary: '농장 이동 속도를 비약적으로 높여 주는 희귀 장신구입니다.',
+        grades: { '다': '이동속도 대폭 증가', '금': '이동속도 증가' },
+        desc: '이벤트 행사로 얻을 수 있는 희귀한 액세서리로 입수 확률이 극히 낮습니다.'
+    },
+    '뱀뱀': {
+        officialName: '뱀뱀 액세서리',
+        group: '특수',
+        tags: ['특수'],
+        box: '12지신 이벤트',
+        colorBadge: 'bg-purple-100 text-purple-800 border-purple-200',
+        target: '특수 효과',
+        equipGuide: '12지신 한정',
+        effectSummary: '12지신 뱀의 해 기념 특수 장신구입니다.',
+        grades: { '다': '12지신 기념 특수 효과', '금': '12지신 기념 특수 효과' },
+        desc: '12지신 이벤트 한정 기념 장신구입니다.'
+    },
+    '청룡': {
+        officialName: '청룡 액세서리',
+        group: '특수',
+        tags: ['특수'],
+        box: '청룡의 해 이벤트',
+        colorBadge: 'bg-purple-100 text-purple-800 border-purple-200',
+        target: '특수 효과',
+        equipGuide: '청룡 한정',
+        effectSummary: '청룡의 해 기념 특수 장신구입니다.',
+        grades: { '다': '12지신 기념 특수 효과', '금': '12지신 기념 특수 효과' },
+        desc: '청룡의 해 이벤트 한정 기념 장신구입니다.'
+    },
+    '갈갈': {
+        officialName: '갈갈 액세서리',
+        group: '갈갈',
+        tags: ['갈갈'],
+        box: '융해시설용',
+        colorBadge: 'bg-gray-100 text-gray-700 border-gray-300',
+        target: '융해 분해',
+        equipGuide: '융해하여 조각 획득',
+        effectSummary: '융해시설에서 갈아버려 조각을 얻는 장신구들입니다.',
+        grades: { '다': '다이아 조각 획득', '금': '금 조각 획득', '은': '은 조각 획득' },
+        desc: '갈갈액세란 융해시설에서 갈아버려 조각을 얻는 장신구들로, 최저가 시세에 거래됩니다.'
+    }
+};
+
+const DUAL_ACC_PART_MAP = [
+    ['씨앗', '씨앗'], ['새싹', '새싹'], ['발톱', '발톱'], ['손톱', '손톱'],
+    ['흙', '흙'], ['진액', '진액'], ['칼날', '칼날'], ['물방울', '물방울'],
+    ['생육', '생육'], ['치유', '치유'], ['살충', '살충'],
+    ['씨', '씨앗'], ['새', '새싹'], ['발', '발톱'], ['손', '손톱'],
+    ['진', '진액'], ['칼', '칼날'], ['물', '물방울'], ['생', '생육'],
+    ['치', '치유'], ['살', '살충']
+];
+
+const getDualAccFullName = (accName) => {
+    if (!accName) return accName;
+    if (accName === '바씨새') return '바람씨앗새싹';
+    if (accName === '바새치유') return '바람새싹치유';
+    if (accName === '바새살' || accName === '바람새싹살충') return '바람새싹살충';
+    if (accName === '바칼물') return '바람칼날물방울';
+
+    let rest = accName;
+    let prefix = '';
+    if (rest.startsWith('바람의 ')) {
+        prefix = '바람';
+        rest = rest.slice(4);
+    } else if (rest.startsWith('바람')) {
+        prefix = '바람';
+        rest = rest.slice(2);
+    } else if (rest.startsWith('바')) {
+        prefix = '바람';
+        rest = rest.slice(1);
+    }
+    if (!prefix) return accName;
+
+    let result = prefix;
+    let idx = 0;
+    while (idx < rest.length) {
+        let matched = false;
+        for (const [abbr, full] of DUAL_ACC_PART_MAP) {
+            if (rest.startsWith(abbr, idx)) {
+                result += full;
+                idx += abbr.length;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            result += rest[idx];
+            idx += 1;
+        }
+    }
+    return result;
+};
+
+const getAccMeta = (accName) => {
+    if (ACC_META_DB[accName]) return ACC_META_DB[accName];
+    // 동적 듀얼 액세서리 파싱 (예: 바람새싹살충, 바새치유, 바씨새, 바람의 흙진액 등)
+    if (accName.startsWith('바람') || accName.startsWith('바') || accName.startsWith('듀')) {
+        const tags = ['듀얼'];
+        if (accName.includes('살') || accName.includes('치') || accName.includes('에코')) {
+            tags.push('에코');
+        }
+        if (accName.startsWith('바') || accName.includes('바람')) {
+            tags.push('바람');
+        }
+        return {
+            officialName: `${getDualAccFullName(accName)} 액세서리`,
+            group: '듀얼',
+            tags,
+            box: '듀얼리박 (265레알)',
+            colorBadge: 'bg-violet-100 text-violet-800 border-violet-200',
+            target: '복합 농사 작업',
+            equipGuide: '오로지 다이아만 존재',
+            effectSummary: '두 가지 기능을 동시에 가진 희귀 듀얼 장신구입니다.',
+            grades: { '다': '두 가지 특수 기능 동시 발동' },
+            desc: '두 가지 장신구에서 따온 이름을 가지고 있으며 수량이 극히 드뭅니다. 오로지 다이아 액세서리만 있으며 금이나 은 듀얼 액세서리는 없습니다.'
+        };
+    }
+    return null;
+};
+
 const VALID_ACC_OPTIONS = new Set([
+    // 일반 / 퀘스트 / 드롭
     '하레', '하경', '발굴', '시균', '타우', '앰플', '키토', '효소', '농아', '고미',
-    '신생', '신씨', '활씨', '활생', '무당벌레알', '진디벌', '이리응애', '천연방제균',
-    '먹이진딧물', '먹이응애', '미생물방제균', 'EM', '농축유산균', '고효',
-    '다그닥', '뱀뱀', '청룡', '찰나', '갈갈'
+    '신생', '신씨', '활씨', '활생', '미네랄', '아미노산',
+    // 바람의 액세서리 (오로지 금 등급만 존재, 쥬얼리박)
+    '바손', '바씨', '바진', '바칼', '바새', '바물', '바발', '바생', '바흙',
+    // 친환경 재료 드롭 (에코 쥬얼리박)
+    '무당벌레알', '진디벌', '이리응애', '천연방제균', '먹이진딧물', '먹이응애',
+    '미생물방제균', 'EM', '농축유산균', '고효',
+    // 친환경 신속 & 친환경 바람
+    '신치', '신살', '바치', '바살',
+    // 경험의 액세서리
+    '경씨', '경새', '경발', '경손', '경흙', '경진', '경물', '경생',
+    // 특수 / 희귀 / 이벤트
+    '찰나', '다그닥', '뱀뱀', '청룡', '갈갈'
 ]);
 
 const normalizeAccOption = (rawOpt) => {
@@ -1154,6 +2323,7 @@ const normalizeAccOption = (rawOpt) => {
     if (!opt) return '';
     if (opt.toUpperCase() === 'EM') return 'EM';
     if (opt === '무당벌레' || opt === '무당벌레알') return '무당벌레알';
+    if (opt === '미생물방제제' || opt === '미생물방제균') return '미생물방제균';
     return opt;
 };
 
@@ -1161,7 +2331,7 @@ const isAllowedAccOption = (rawOpt) => {
     const opt = normalizeAccOption(rawOpt);
     if (!opt) return false;
     if (VALID_ACC_OPTIONS.has(opt)) return true;
-    if (opt.startsWith('바')) return true;
+    if (opt.startsWith('듀') || opt.startsWith('바람') || opt.startsWith('바')) return true;
     return false;
 };
 
@@ -1442,6 +2612,51 @@ const processItemOnDemand = (cat, itemName) => {
                 }
             });
 
+            // 7강 vs 8강 시세 역전(8강이 7강보다 더 싼 모순적 시세) 검사 및 조건부 표본 병합
+            // 사용자의 요청: "현재 가격이 역전되어있는 사례에 대해서만 둘을 합치는 방식을 한번 적용해봐라."
+            const cell7 = allMatrix['7_7'];
+            const cell8 = allMatrix['8_8'];
+            if (cell7 && cell8 && Array.isArray(cell7.history) && Array.isArray(cell8.history) && cell7.history.length > 0 && cell8.history.length > 0) {
+                let s7 = 0;
+                let s8 = 0;
+                try {
+                    s7 = (typeof computeMarketAnalysis === 'function' ? computeMarketAnalysis(cell7.history)?.spotFair : null) || cell7.price || 0;
+                    s8 = (typeof computeMarketAnalysis === 'function' ? computeMarketAnalysis(cell8.history)?.spotFair : null) || cell8.price || 0;
+                } catch (e) {
+                    s7 = cell7.price || 0;
+                    s8 = cell8.price || 0;
+                }
+
+                if (s7 > 0 && s8 > 0 && s8 < s7) {
+                    const seen = new Set();
+                    const combinedHistory = [];
+                    [...cell7.history, ...cell8.history].forEach(h => {
+                        const k = h.rawLineIdx !== undefined ? h.rawLineIdx : `${h.isoDate?.getTime()}_${h.price}`;
+                        if (!seen.has(k)) {
+                            seen.add(k);
+                            combinedHistory.push(h);
+                        }
+                    });
+                    combinedHistory.sort((a, b) => (a.isoDate - b.isoDate) || ((a.rawLineIdx || 0) - (b.rawLineIdx || 0)));
+
+                    const lastPrice = combinedHistory.length > 0 ? combinedHistory[combinedHistory.length - 1].price : cell7.price;
+
+                    cell7.history = combinedHistory;
+                    cell7.count = combinedHistory.length;
+                    cell7.price = lastPrice;
+
+                    cell8.history = combinedHistory;
+                    cell8.count = combinedHistory.length;
+                    cell8.price = lastPrice;
+
+                    if (HIDE_UNDER_3 && combinedHistory.length >= 3) {
+                        validMatrix['7_7'] = cell7;
+                        validMatrix['8_8'] = cell8;
+                    }
+                    if (v.spotCache) v.spotCache = {};
+                }
+            }
+
             if (matrixValidCount > 0) {
                 v.matrix = validMatrix;
                 v.rawMatrixAll = allMatrix;
@@ -1462,6 +2677,7 @@ const processItemOnDemand = (cat, itemName) => {
     });
 
     if (hasValidVariant) {
+        item.allVariantsRaw = item.variants;
         item.variants = validVariants;
         return item;
     }
@@ -1564,9 +2780,16 @@ const setupEventListeners = () => {
                 e.target.classList.add('active', 'bg-blue-600', 'text-white', 'hover:bg-blue-700');
                 e.target.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
                 currentCategory = e.target.dataset.category;
+                if (currentCategory === 'acc' && (currentSortMode === 'level_asc' || currentSortMode === 'level_desc')) {
+                    currentSortMode = 'freq';
+                }
+                isClothesUpgradeOpen = false;
+                isGachaMainOpen = false;
+                updateSortUI();
                 renderFilters();
                 renderGrid();
                 renderGachaEVSection();
+                renderClothesUpgradeSection();
             };
         });
     }
@@ -1642,19 +2865,267 @@ let visibleLimit = 60;
 const BATCH_SIZE = 60;
 let observer = null;
 
+const PART_FILTER_OPTIONS = [
+    { key: 'all', label: '전체' },
+    { key: '괭이', label: '괭이' },
+    { key: '낫', label: '낫' },
+    { key: '물뿌', label: '물뿌' },
+    { key: '거삽', label: '거삽' },
+    { key: '모삽', label: '모삽' },
+    { key: '모자', label: '모자' },
+    { key: '상의', label: '상의' },
+    { key: '하의', label: '하의' }
+];
+
+const TAG_FILTER_OPTIONS = [
+    { key: 'all', label: '전체', activeCls: 'bg-blue-600 text-white border-blue-600 shadow-xs' },
+    { key: '가족거래', label: '가족거래', activeCls: 'bg-gradient-to-r from-red-600 via-rose-600 to-red-500 text-white border-rose-600 shadow-xs' },
+    { key: '기술', label: '기술', activeCls: 'bg-sky-600 text-white border-sky-600 shadow-xs' },
+    { key: '체력', label: '체력', activeCls: 'bg-orange-600 text-white border-orange-600 shadow-xs' },
+    { key: '튼튼', label: '튼튼', activeCls: 'bg-amber-500 text-white border-amber-500 shadow-xs' },
+    { key: '신속', label: '신속/쾌속', activeCls: 'bg-emerald-600 text-white border-emerald-600 shadow-xs' },
+    { key: '쿠폰장비', label: '쿠폰장비', activeCls: 'bg-purple-600 text-white border-purple-600 shadow-xs' }
+];
+
+const ACC_TAG_FILTER_OPTIONS = [
+    { key: 'all', label: '전체', activeCls: 'bg-blue-600 text-white border-blue-600 shadow-xs' },
+    { key: '에코', label: '에코', activeCls: 'bg-emerald-600 text-white border-emerald-600 shadow-xs' },
+    { key: '바람', label: '바람', activeCls: 'bg-sky-600 text-white border-sky-600 shadow-xs' },
+    { key: '활력', label: '활력', activeCls: 'bg-rose-600 text-white border-rose-600 shadow-xs' },
+    { key: '신속', label: '신속', activeCls: 'bg-cyan-600 text-white border-cyan-600 shadow-xs' },
+    { key: '재료', label: '재료', activeCls: 'bg-amber-500 text-white border-amber-500 shadow-xs' },
+    { key: '발굴', label: '발굴', activeCls: 'bg-orange-600 text-white border-orange-600 shadow-xs' },
+    { key: '하레', label: '하레', activeCls: 'bg-teal-600 text-white border-teal-600 shadow-xs' },
+    { key: '특수', label: '특수', activeCls: 'bg-purple-600 text-white border-purple-600 shadow-xs' },
+    { key: '듀얼', label: '듀얼', activeCls: 'bg-violet-600 text-white border-violet-600 shadow-xs' },
+    { key: '갈갈', label: '갈갈', activeCls: 'bg-gray-700 text-white border-gray-700 shadow-xs' }
+];
+
+const renderAccBadgesHtml = (accMeta) => {
+    if (!accMeta) return '';
+    const tags = Array.isArray(accMeta.tags) && accMeta.tags.length > 0
+        ? accMeta.tags
+        : [accMeta.group || '액세서리'];
+
+    return tags.map(tag => {
+        let cls = 'bg-blue-50 text-blue-700 border-blue-200';
+        if (tag === '에코') cls = 'bg-emerald-50 text-emerald-700 border-emerald-200 font-extrabold';
+        else if (tag === '바람') cls = 'bg-sky-50 text-sky-700 border-sky-200';
+        else if (tag === '활력') cls = 'bg-rose-50 text-rose-700 border-rose-200';
+        else if (tag === '신속') cls = 'bg-cyan-50 text-cyan-700 border-cyan-200';
+        else if (tag === '재료') cls = 'bg-amber-50 text-amber-700 border-amber-200';
+        else if (tag === '발굴') cls = 'bg-orange-50 text-orange-700 border-orange-200';
+        else if (tag === '하레') cls = 'bg-teal-50 text-teal-700 border-teal-200';
+        else if (tag === '특수') cls = 'bg-purple-50 text-purple-700 border-purple-200';
+        else if (tag === '듀얼') cls = 'bg-violet-50 text-violet-700 border-violet-200';
+        else if (tag === '갈갈') cls = 'bg-gray-100 text-gray-700 border-gray-300';
+
+        return `<span class="shrink-0 px-2 py-0.5 rounded-md ${cls} border text-[11px] font-bold whitespace-nowrap">${tag}</span>`;
+    }).join(' ');
+};
+
+const matchEquipPartFilter = (meta, partKey) => {
+    if (!partKey || partKey === 'all') return true;
+    if (!meta) return false;
+    const p = meta.part || '';
+    if (partKey === '괭이') return p === '괭이' || p === '로터리';
+    if (partKey === '낫') return p === '낫' || p === '콤바인';
+    if (partKey === '물뿌') return p === '물뿌리개';
+    if (partKey === '거삽') return p === '거름삽' || p === '퇴비 살포기';
+    if (partKey === '모삽') return p === '모종삽' || p === '파종기';
+    return p === partKey;
+};
+
+const matchEquipTagFilter = (meta, tagKey) => {
+    if (!tagKey || tagKey === 'all') return true;
+    if (!meta) return false;
+    if (tagKey === '가족거래') return Boolean(meta.isFamilyTrade);
+    if (tagKey === '기술') return Boolean(meta.isTech);
+    if (tagKey === '체력') return Boolean(meta.isHp);
+    if (tagKey === '튼튼') return Boolean(meta.isSturdy);
+    if (tagKey === '신속') return Boolean(meta.isSwift);
+    if (tagKey === '쿠폰장비') return Boolean(meta.isCoupon);
+    return true;
+};
+
 const renderFilters = () => {
     if (!elements.dynamicFilters) return;
+    const prevSearch = document.getElementById('search-input')?.value || '';
+
+    const extraFiltersHtml = currentCategory === 'equip' ? `
+        <!-- 구분 필터 (부위/종류) -->
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <label class="block text-sm font-medium text-gray-700">구분 필터 (부위/종류)</label>
+                ${currentPartFilter !== 'all' ? `<button type="button" id="reset-part-filter" class="text-[11px] text-blue-600 hover:underline font-semibold">초기화</button>` : ''}
+            </div>
+            <div class="grid grid-cols-3 gap-1.5" id="part-filter-group">
+                ${PART_FILTER_OPTIONS.map(opt => {
+                    const isActive = currentPartFilter === opt.key;
+                    const cls = isActive
+                        ? 'bg-blue-600 text-white border-blue-600 font-bold shadow-xs'
+                        : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 font-medium';
+                    return `<button type="button" data-part="${opt.key}" class="part-filter-btn py-1.5 px-2 rounded-lg border text-xs transition text-center ${cls}">${opt.label}</button>`;
+                }).join('')}
+            </div>
+        </div>
+
+        <!-- 태그 필터 (특수 속성) -->
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <label class="block text-sm font-medium text-gray-700">태그 필터 (속성)</label>
+                ${currentTagFilter !== 'all' ? `<button type="button" id="reset-tag-filter" class="text-[11px] text-blue-600 hover:underline font-semibold">초기화</button>` : ''}
+            </div>
+            <div class="flex flex-wrap gap-1.5" id="tag-filter-group">
+                ${TAG_FILTER_OPTIONS.map(opt => {
+                    const isActive = currentTagFilter === opt.key;
+                    const cls = isActive
+                        ? `${opt.activeCls} font-bold`
+                        : (opt.key === '가족거래'
+                            ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 font-extrabold'
+                            : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 font-medium');
+                    return `<button type="button" data-tag="${opt.key}" class="tag-filter-btn py-1.5 px-2.5 rounded-lg border text-xs transition ${cls}">${opt.label}</button>`;
+                }).join('')}
+            </div>
+        </div>
+    ` : `
+        <!-- 액세서리 태그 필터 -->
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <label class="block text-sm font-medium text-gray-700">태그 필터 (속성)</label>
+                ${currentAccTagFilter !== 'all' ? `<button type="button" id="reset-acc-tag-filter" class="text-[11px] text-blue-600 hover:underline font-semibold">초기화</button>` : ''}
+            </div>
+            <div class="flex flex-wrap gap-1.5" id="acc-tag-filter-group">
+                ${ACC_TAG_FILTER_OPTIONS.map(opt => {
+                    const isActive = currentAccTagFilter === opt.key;
+                    const cls = isActive
+                        ? `${opt.activeCls} font-bold`
+                        : (opt.key === '에코'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100 font-bold'
+                            : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 font-medium');
+                    return `<button type="button" data-acctag="${opt.key}" class="acc-tag-filter-btn py-1.5 px-2.5 rounded-lg border text-xs transition ${cls}">${opt.label}</button>`;
+                }).join('')}
+            </div>
+        </div>
+    `;
+
+    const analysisLauncherHtml = currentCategory === 'equip'
+        ? `
+        <div class="pt-3 border-t border-gray-100">
+            <button type="button" id="btn-sidebar-open-clothes-upgrade" class="w-full py-2.5 px-3 rounded-lg border text-xs font-bold transition text-left flex items-center justify-between shadow-2xs ${isClothesUpgradeOpen ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white text-gray-800 border-gray-200 hover:bg-blue-50 hover:border-blue-300'}">
+                <span>의상 체력/기술 단계별 상승 비용표</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] ${isClothesUpgradeOpen ? 'bg-white/20 text-white font-extrabold' : 'bg-gray-100 text-gray-700 font-semibold'}">${isClothesUpgradeOpen ? '닫기' : '열기'}</span>
+            </button>
+        </div>
+        `
+        : `
+        <div class="pt-3 border-t border-gray-100">
+            <button type="button" id="btn-sidebar-open-gacha-ev" class="w-full py-2.5 px-3 rounded-lg border text-xs font-bold transition text-left flex items-center justify-between shadow-2xs ${isGachaMainOpen ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white text-gray-800 border-gray-200 hover:bg-blue-50 hover:border-blue-300'}">
+                <span>금도 · 다도 기대수익 분석</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] ${isGachaMainOpen ? 'bg-white/20 text-white font-extrabold' : 'bg-gray-100 text-gray-700 font-semibold'}">${isGachaMainOpen ? '닫기' : '열기'}</span>
+            </button>
+        </div>
+        `;
+
+    const searchPlaceholder = currentCategory === 'equip'
+        ? '예: 파종기, 크파, 선글라스, 튼썬...'
+        : '예: 바씨, EM, 찰나, 에코, 바람, 신속...';
+
     elements.dynamicFilters.innerHTML = `
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">검색 (정식명칭 / 줄임말 / 부위)</label>
-            <input type="text" id="search-input" placeholder="예: 파종기, 크파, 선글라스, 튼썬..." class="w-full bg-white border border-gray-300 text-gray-900 rounded p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
-        </div>`;
+            <label class="block text-sm font-medium text-gray-700 mb-2">검색 (정식명칭 / 줄임말 / 속성)</label>
+            <input type="text" id="search-input" value="${prevSearch.replace(/"/g, '&quot;')}" placeholder="${searchPlaceholder}" class="w-full bg-white border border-gray-300 text-gray-900 rounded p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+        </div>
+        ${extraFiltersHtml}
+        ${analysisLauncherHtml}
+    `;
 
     const input = document.getElementById('search-input');
     if (input) input.oninput = (e) => {
         visibleLimit = BATCH_SIZE; // Reset scroll
         renderGrid(e.target.value);
     };
+
+    document.getElementById('btn-sidebar-open-clothes-upgrade')?.addEventListener('click', () => {
+        isClothesUpgradeOpen = !isClothesUpgradeOpen;
+        renderFilters();
+        renderClothesUpgradeSection();
+        if (isClothesUpgradeOpen) {
+            document.getElementById('clothes-upgrade-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (window.innerWidth < 768 && elements.sidebar) {
+                elements.sidebar.classList.add('-translate-x-full');
+                elements.sidebarOverlay?.classList.add('hidden');
+                elements.sidebarOverlay?.classList.remove('active');
+            }
+        }
+    });
+
+    document.getElementById('btn-sidebar-open-gacha-ev')?.addEventListener('click', () => {
+        isGachaMainOpen = !isGachaMainOpen;
+        renderFilters();
+        renderGachaEVSection();
+        if (isGachaMainOpen) {
+            document.getElementById('gacha-ev-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (window.innerWidth < 768 && elements.sidebar) {
+                elements.sidebar.classList.add('-translate-x-full');
+                elements.sidebarOverlay?.classList.add('hidden');
+                elements.sidebarOverlay?.classList.remove('active');
+            }
+        }
+    });
+
+    if (currentCategory === 'equip') {
+        elements.dynamicFilters.querySelectorAll('.part-filter-btn').forEach(btn => {
+            btn.onclick = () => {
+                const clicked = btn.dataset.part;
+                currentPartFilter = (currentPartFilter === clicked && clicked !== 'all') ? 'all' : clicked;
+                visibleLimit = BATCH_SIZE;
+                renderFilters();
+                renderGrid(document.getElementById('search-input')?.value || '');
+            };
+        });
+
+        elements.dynamicFilters.querySelectorAll('.tag-filter-btn').forEach(btn => {
+            btn.onclick = () => {
+                const clicked = btn.dataset.tag;
+                currentTagFilter = (currentTagFilter === clicked && clicked !== 'all') ? 'all' : clicked;
+                visibleLimit = BATCH_SIZE;
+                renderFilters();
+                renderGrid(document.getElementById('search-input')?.value || '');
+            };
+        });
+
+        document.getElementById('reset-part-filter')?.addEventListener('click', () => {
+            currentPartFilter = 'all';
+            visibleLimit = BATCH_SIZE;
+            renderFilters();
+            renderGrid(document.getElementById('search-input')?.value || '');
+        });
+
+        document.getElementById('reset-tag-filter')?.addEventListener('click', () => {
+            currentTagFilter = 'all';
+            visibleLimit = BATCH_SIZE;
+            renderFilters();
+            renderGrid(document.getElementById('search-input')?.value || '');
+        });
+    } else if (currentCategory === 'acc') {
+        elements.dynamicFilters.querySelectorAll('.acc-tag-filter-btn').forEach(btn => {
+            btn.onclick = () => {
+                const clicked = btn.dataset.acctag;
+                currentAccTagFilter = (currentAccTagFilter === clicked && clicked !== 'all') ? 'all' : clicked;
+                visibleLimit = BATCH_SIZE;
+                renderFilters();
+                renderGrid(document.getElementById('search-input')?.value || '');
+            };
+        });
+
+        document.getElementById('reset-acc-tag-filter')?.addEventListener('click', () => {
+            currentAccTagFilter = 'all';
+            visibleLimit = BATCH_SIZE;
+            renderFilters();
+            renderGrid(document.getElementById('search-input')?.value || '');
+        });
+    }
 };
 
 const renderGrid = (filterText = '') => {
@@ -1677,17 +3148,59 @@ const renderGrid = (filterText = '') => {
             };
         });
 
+    // 구분필터 & 태그필터 적용
+    if (currentCategory === 'equip') {
+        if (currentPartFilter !== 'all') {
+            items = items.filter(item => matchEquipPartFilter(item.meta, currentPartFilter));
+        }
+        if (currentTagFilter !== 'all') {
+            items = items.filter(item => matchEquipTagFilter(item.meta, currentTagFilter));
+        }
+    } else if (currentCategory === 'acc') {
+        if (currentAccTagFilter !== 'all') {
+            items = items.filter(item => {
+                const accMeta = getAccMeta(item.name);
+                const tags = accMeta?.tags || (accMeta?.group ? [accMeta.group] : []);
+                return tags.includes(currentAccTagFilter);
+            });
+        }
+    }
+
     if (q) {
         items = items.filter(item => {
             if (item.name.toLowerCase().includes(q) || item.displayName.toLowerCase().includes(q)) return true;
             if (item.meta) {
-                const searchBlob = `${item.meta.officialName} ${item.meta.abbr} ${item.meta.subType} ${item.meta.part} ${item.meta.level}렙`.toLowerCase();
+                const m = item.meta;
+                const searchBlob = `${m.officialName} ${m.abbr} ${m.subType} ${m.part} ${m.level}렙 ${m.isFamilyTrade ? '가족거래 가족' : ''} ${m.isCoupon ? '쿠폰 쿠폰장비' : ''} ${m.isTech ? '기술' : ''} ${m.isHp ? '체력' : ''} ${m.isSturdy ? '튼튼' : ''} ${m.isSwift ? '신속 쾌속' : ''}`.toLowerCase();
                 return searchBlob.includes(q);
+            }
+            if (item.category === 'acc') {
+                const accMeta = getAccMeta(item.name);
+                if (accMeta) {
+                    const tagsStr = (accMeta.tags || []).join(' ');
+                    const searchBlob = `${accMeta.officialName} ${accMeta.group} ${tagsStr} ${accMeta.target || ''} ${accMeta.effectSummary || ''} ${accMeta.desc || ''}`.toLowerCase();
+                    return searchBlob.includes(q);
+                }
             }
             return false;
         });
     }
     items = sortItemsOrVariants(items, currentSortMode);
+
+    // 상단 페이지 타이틀에 현재 필터 및 개수 반영
+    const pageTitleEl = document.getElementById('page-title');
+    if (pageTitleEl) {
+        if (currentCategory === 'equip') {
+            const activeLabels = ['장비'];
+            if (currentPartFilter !== 'all') activeLabels.push(currentPartFilter);
+            if (currentTagFilter !== 'all') activeLabels.push(currentTagFilter);
+            pageTitleEl.textContent = `${activeLabels.join(' · ')} (${items.length}종)`;
+        } else {
+            const activeLabels = ['액세서리'];
+            if (currentAccTagFilter !== 'all') activeLabels.push(currentAccTagFilter);
+            pageTitleEl.textContent = `${activeLabels.join(' · ')} (${items.length}종)`;
+        }
+    }
 
     if (items.length === 0) {
         grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10">데이터가 없습니다.</div>`;
@@ -1703,16 +3216,13 @@ const renderGrid = (filterText = '') => {
 
         if (item.category === 'equip' && item.meta) {
             const m = item.meta;
-            const attrBadges = [];
-            if (m.isSturdy) attrBadges.push(`<span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">튼튼</span>`);
-            if (m.isSwift) attrBadges.push(`<span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">신속</span>`);
-            if (m.isCoupon) attrBadges.push(`<span class="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold">쿠폰장비</span>`);
+            const badgesHtml = renderEquipBadgesHtml(m);
 
             card.innerHTML = `
                 <div>
-                    <div class="flex items-start justify-between gap-2 mb-1.5">
-                        <span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-bold">Lv.${m.level} · ${m.part}</span>
-                        <div class="flex flex-wrap gap-1 justify-end">${attrBadges.join('')}</div>
+                    <div class="flex items-start justify-between gap-1.5 mb-1.5 min-h-[24px]">
+                        <span class="shrink-0 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-bold whitespace-nowrap">Lv.${m.level} · ${m.part}</span>
+                        <div class="flex flex-wrap items-center gap-1 justify-end">${badgesHtml}</div>
                     </div>
                     <h3 class="text-lg md:text-xl font-extrabold text-gray-900 leading-snug break-keep">${item.name}</h3>
                     <div class="mt-1 flex items-center justify-between gap-2">
@@ -1725,8 +3235,61 @@ const renderGrid = (filterText = '') => {
                         <div><span class="text-gray-400">정식 명칭:</span> <strong class="text-gray-800">${m.officialName}</strong></div>
                         <div><span class="text-gray-400">주요 줄임말:</span> <span class="text-blue-700 font-semibold">${m.abbr}</span></div>
                         <div><span class="text-gray-400">착용 렙제 / 분류:</span> <span class="font-semibold text-gray-800">${m.level}레벨 (${m.subType} · ${m.part})</span></div>
-                        <div><span class="text-gray-400">특수 속성:</span> <span>${m.isSturdy ? '튼튼한 장비(강화 성공률 상승)' : '일반 내구'}${m.isSwift ? ' · 신속 장비' : ''}${m.isCoupon ? ' · 레알쿠폰 세트장비' : ''}</span></div>
+                        <div><span class="text-gray-400">특수 속성:</span> <span>${getSpecialAttrDesc(m)}</span></div>
                         ${m.desc ? `<div class="text-[11px] text-indigo-700 bg-indigo-50/80 p-1.5 rounded border border-indigo-100 mt-1">${m.desc}</div>` : ''}
+                    </div>
+                </div>
+            `;
+
+            const toggleBtn = card.querySelector('.card-detail-toggle-btn');
+            const detailPanel = card.querySelector('.card-detail-panel');
+            if (toggleBtn && detailPanel) {
+                toggleBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const isHidden = detailPanel.classList.contains('hidden');
+                    detailPanel.classList.toggle('hidden', !isHidden);
+                    toggleBtn.textContent = isHidden ? '상세정보 ▴' : '상세정보 ▾';
+                };
+            }
+        } else if (item.category === 'acc') {
+            const accMeta = getAccMeta(item.name);
+            const badgesHtml = renderAccBadgesHtml(accMeta);
+            const officialName = accMeta?.officialName || `${item.name} 액세서리`;
+            const effectSummary = accMeta?.effectSummary || '농사에 도움을 주는 장신구입니다.';
+
+            card.innerHTML = `
+                <div>
+                    <div class="flex items-start justify-between gap-1.5 mb-1.5 min-h-[24px]">
+                        <div class="flex flex-wrap items-center gap-1">${badgesHtml}</div>
+                        <div class="flex flex-wrap items-center gap-1 justify-end">
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600">장신구</span>
+                        </div>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-extrabold text-gray-900 leading-snug break-keep">${item.name}</h3>
+                    <div class="mt-1 flex items-center justify-between gap-2">
+                        <span class="text-xs text-gray-500 truncate">${officialName}</span>
+                        <button type="button" class="card-detail-toggle-btn text-[11px] text-blue-600 hover:text-blue-800 font-semibold whitespace-nowrap px-1.5 py-0.5 rounded hover:bg-blue-50 transition">
+                            상세정보 ▾
+                        </button>
+                    </div>
+                    <div class="card-detail-panel hidden mt-2.5 pt-2.5 border-t border-gray-100 text-xs text-gray-600 space-y-1.5 bg-gray-50/80 rounded-lg p-2.5">
+                        <div><span class="text-gray-400">정식 명칭:</span> <strong class="text-gray-800">${officialName}</strong></div>
+                        ${accMeta?.target ? `<div><span class="text-gray-400">대상 작업:</span> <span class="font-medium text-gray-800">${accMeta.target}</span></div>` : ''}
+                        <div><span class="text-gray-400">발동 효과:</span> <span class="font-bold text-gray-900">${effectSummary}</span></div>
+                        ${accMeta?.grades ? `
+                            <div class="mt-1 pt-1 border-t border-gray-200/60 text-[11px]">
+                                <span class="text-gray-400 block mb-0.5 font-medium">등급별 효과:</span>
+                                <div class="grid grid-cols-1 gap-1">
+                                    ${Object.entries(accMeta.grades).map(([g, eff]) => `
+                                        <div class="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded border border-gray-100">
+                                            <span class="font-bold ${g === '다' ? 'text-cyan-700' : (g === '금' ? 'text-amber-600' : 'text-gray-600')}">[${g === '다' ? '다이아' : (g === '금' ? '금' : '은')}]</span>
+                                            <span class="text-gray-700 font-medium">${eff}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${accMeta?.desc ? `<div class="text-[11px] text-indigo-700 bg-indigo-50/80 p-1.5 rounded border border-indigo-100 mt-1">${accMeta.desc}</div>` : ''}
                     </div>
                 </div>
             `;
@@ -1783,6 +3346,53 @@ const renderGrid = (filterText = '') => {
 const renderModalHeaderDetails = (item, selectedVariant = null) => {
     if (!elements.modalEquipBadges || !elements.equipDetailDrawer) return;
 
+    if (item.category === 'acc') {
+        const accMeta = getAccMeta(item.name);
+        const officialName = accMeta?.officialName || `${item.name} 액세서리`;
+        const groupName = accMeta?.group || '액세서리';
+        const badgesHtml = renderAccBadgesHtml(accMeta);
+
+        elements.modalEquipBadges.innerHTML = badgesHtml;
+
+        elements.equipDetailDrawer.classList.remove('hidden');
+        elements.equipDetailDrawer.innerHTML = `
+            <div class="flex items-center justify-between pb-1.5 border-b border-gray-100">
+                <span class="font-bold text-gray-800 text-xs">액세서리 세부정보</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                <div><span class="text-gray-400">정식 명칭:</span> <strong class="text-gray-800">${officialName}</strong></div>
+                <div><span class="text-gray-400">분류:</span> <span class="font-semibold text-blue-700">${groupName} 액세서리 (목걸이/반지)</span></div>
+                ${accMeta?.target ? `<div><span class="text-gray-400">대상 작업:</span> <span class="font-semibold text-gray-800">${accMeta.target}</span></div>` : ''}
+                <div><span class="text-gray-400">발동 효과:</span> <span class="font-bold text-gray-900">${accMeta?.effectSummary || '농사 보조 효과'}</span></div>
+            </div>
+            ${accMeta?.grades ? `
+                <div class="pt-2 border-t border-gray-100">
+                    <span class="text-[11px] text-gray-400 font-semibold block mb-1">등급별 효과:</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-xs">
+                        ${Object.entries(accMeta.grades).map(([g, eff]) => {
+                            const isCur = selectedVariant && (selectedVariant.name === g || (g === '다' && selectedVariant.name.includes('다')));
+                            return `
+                                <div class="p-2 rounded-lg border ${isCur ? 'bg-blue-50/80 border-blue-300 ring-1 ring-blue-300 font-bold' : 'bg-white border-gray-100'}">
+                                    <div class="flex items-center justify-between mb-0.5">
+                                        <span class="${g === '다' ? 'text-cyan-700' : (g === '금' ? 'text-amber-600' : 'text-gray-600')} font-extrabold">[${g === '다' ? '다이아' : (g === '금' ? '금' : '은')}]</span>
+                                        ${isCur ? '<span class="text-[10px] text-blue-600 font-bold">선택됨</span>' : ''}
+                                    </div>
+                                    <div class="text-gray-800 text-[11px]">${eff}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            ${accMeta?.desc ? `
+                <div class="p-2 rounded-lg bg-indigo-50/60 border border-indigo-100 text-[11px] text-indigo-900 leading-relaxed">
+                    ${accMeta.desc}
+                </div>
+            ` : ''}
+        `;
+        return;
+    }
+
     if (item.category !== 'equip' || !item.equipMeta) {
         elements.modalEquipBadges.innerHTML = '';
         elements.equipDetailDrawer.classList.add('hidden');
@@ -1791,76 +3401,23 @@ const renderModalHeaderDetails = (item, selectedVariant = null) => {
     }
 
     const m = item.equipMeta;
-    const optMeta = selectedVariant?.optMeta || null;
+    const baseStats = getEquipBaseStats(m.key, m);
+    const baseSummary = formatEquipBaseStatsSummary(baseStats, m);
 
+    // 상단 헤더 배지 (옵션 세부정보 중복 제거, 장비 스탯 & 강화증가량 중심 버튼)
+    const badgesHtml = renderEquipBadgesHtml(m);
     elements.modalEquipBadges.innerHTML = `
         <span class="text-xs text-gray-600 font-medium">${m.officialName}</span>
-        <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-bold">Lv.${m.level} · ${m.part}</span>
-        ${m.isSturdy ? `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-bold">튼튼</span>` : ''}
-        ${m.isSwift ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">신속</span>` : ''}
-        ${m.isCoupon ? `<span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800 text-xs font-bold">쿠폰장비</span>` : ''}
-        <button type="button" id="modal-detail-drawer-toggle" class="ml-auto px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold shadow-2xs transition flex items-center gap-1">
-            <span>📖 장비${optMeta ? '·옵션' : ''} 세부정보 열기</span>
+        <span class="shrink-0 px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-bold whitespace-nowrap">Lv.${m.level} · ${m.part}</span>
+        ${badgesHtml}
+        <button type="button" id="modal-detail-drawer-toggle" class="ml-auto px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold shadow-2xs transition flex items-center gap-1 shrink-0">
+            <span>장비 세부정보 & 강화스탯 열기</span>
             <span id="modal-detail-drawer-arrow">▾</span>
         </button>
     `;
 
-    let optDetailHtml = '';
-    if (optMeta) {
-        const st = optMeta.stages;
-        optDetailHtml = `
-            <div class="mt-3 pt-3 border-t border-blue-200/60">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                    <div class="text-xs font-extrabold text-indigo-900">✨ 옵션 줄임말: <span class="text-blue-700">${optMeta.abbr}</span></div>
-                    <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 text-[11px] font-bold">${optMeta.officialName}</span>
-                </div>
-                <p class="text-xs text-gray-700 mb-2">${optMeta.desc}</p>
-                ${st ? `
-                <div class="grid grid-cols-4 gap-1.5 text-center bg-white rounded-lg p-2 border border-indigo-100">
-                    <div class="p-1 rounded bg-gray-50">
-                        <div class="text-[10px] text-gray-400 font-semibold">5강 효과</div>
-                        <div class="text-xs font-bold text-gray-800 mt-0.5">${st[5]}</div>
-                    </div>
-                    <div class="p-1 rounded bg-blue-50/50">
-                        <div class="text-[10px] text-blue-500 font-semibold">7강 효과</div>
-                        <div class="text-xs font-bold text-blue-700 mt-0.5">${st[7]}</div>
-                    </div>
-                    <div class="p-1 rounded bg-indigo-50/60">
-                        <div class="text-[10px] text-indigo-500 font-semibold">9강 효과</div>
-                        <div class="text-xs font-bold text-indigo-700 mt-0.5">${st[9]}</div>
-                    </div>
-                    <div class="p-1 rounded bg-amber-50/80 border border-amber-200/60">
-                        <div class="text-[10px] text-amber-600 font-bold">10강(완성) 효과</div>
-                        <div class="text-xs font-extrabold text-amber-700 mt-0.5">${st[10]}</div>
-                    </div>
-                </div>
-                ` : ''}
-            </div>
-        `;
-    } else {
-        const allVarRows = Object.values(item.variants).map(v => {
-            const om = v.optMeta || getOptionMeta(v.name, m);
-            const stText = om.stages ? `5강 ${om.stages[5]} / 7강 ${om.stages[7]} / 9강 ${om.stages[9]} / 10강 ${om.stages[10]}` : om.desc;
-            return `
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-1.5 border-b border-gray-100 last:border-b-0 text-xs">
-                    <div>
-                        <span class="font-bold text-gray-900">${v.name}</span>
-                        <span class="ml-1.5 text-[11px] text-gray-500">${om.officialName}</span>
-                    </div>
-                    <div class="text-[11px] text-blue-700 font-medium">${stText}</div>
-                </div>
-            `;
-        }).join('');
-
-        optDetailHtml = `
-            <div class="mt-3 pt-3 border-t border-blue-200/60">
-                <div class="text-xs font-extrabold text-indigo-900 mb-1.5">📋 이 장비의 보유 옵션 줄임말 & 단계별 수치 일람</div>
-                <div class="bg-white rounded-lg p-2.5 border border-indigo-100 max-h-44 overflow-y-auto divide-y divide-gray-50">
-                    ${allVarRows}
-                </div>
-            </div>
-        `;
-    }
+    // 1~10강 강화 시 스탯 증가량 수치 컴포넌트 (모든 장비 및 농기계 공통, 상시 노출)
+    const enhanceStatsHtml = buildAllEnhanceStatsTableHtml(baseStats, m);
 
     elements.equipDetailDrawer.innerHTML = `
         <div class="rounded-xl bg-blue-50/70 border border-blue-200 p-3.5 text-xs text-gray-700 shadow-inner">
@@ -1869,12 +3426,18 @@ const renderModalHeaderDetails = (item, selectedVariant = null) => {
                 <div><span class="text-gray-400 font-medium">정식 명칭:</span> <strong class="text-gray-900">${m.officialName}</strong></div>
                 <div><span class="text-gray-400 font-medium">착용 레벨(렙제):</span> <strong class="text-gray-900">${m.level}레벨</strong> (강화 골드 비용 기준)</div>
                 <div><span class="text-gray-400 font-medium">장비 분류/부위:</span> <strong class="text-gray-900">${m.subType} · ${m.part}</strong></div>
+                <div><span class="text-gray-400 font-medium">특수 속성:</span> <span>${getSpecialAttrDesc(m)}</span></div>
+                ${baseSummary ? `
+                <div class="sm:col-span-2 p-2 rounded-lg bg-indigo-50/90 border border-indigo-200 text-indigo-900 font-medium flex items-center justify-between gap-2">
+                    <div><span class="text-indigo-600 font-bold mr-1.5">장비 기본스탯:</span><strong>${baseSummary}</strong></div>
+                </div>` : ''}
             </div>
-            ${m.desc ? `<div class="mt-2 p-2 rounded-lg bg-white/90 border border-blue-100 text-indigo-800 text-[11px] font-medium">💡 ${m.desc}</div>` : ''}
-            ${optDetailHtml}
+            ${m.desc ? `<div class="mt-2 p-2 rounded-lg bg-white/90 border border-blue-100 text-indigo-800 text-[11px] font-medium">${m.desc}</div>` : ''}
+            ${enhanceStatsHtml}
         </div>
     `;
 
+    // 드로어 열기/닫기 토글
     const toggleBtn = document.getElementById('modal-detail-drawer-toggle');
     const arrow = document.getElementById('modal-detail-drawer-arrow');
     if (toggleBtn) {
@@ -1933,11 +3496,14 @@ const renderVariantList = (item) => {
     headerRow.innerHTML = `
         <span class="font-bold text-gray-700">${countLabel} 목록 (${Object.keys(item.variants).length}개)</span>
         <div class="flex items-center gap-1 bg-white rounded-md p-0.5 border border-gray-200 shadow-2xs">
-            <button class="modal-sort-toggle-btn px-2 py-0.5 rounded text-[11px] font-semibold transition ${isFreq ? 'bg-blue-600 text-white shadow-xs' : 'text-gray-500 hover:text-gray-900'}" data-sort="freq">
+            <button class="modal-sort-toggle-btn px-2 py-0.5 rounded text-[11px] font-semibold transition ${currentSortMode === 'freq' ? 'bg-blue-600 text-white shadow-xs' : 'text-gray-500 hover:text-gray-900'}" data-sort="freq">
                 빈도순
             </button>
-            <button class="modal-sort-toggle-btn px-2 py-0.5 rounded text-[11px] font-semibold transition ${!isFreq ? 'bg-blue-600 text-white shadow-xs' : 'text-gray-500 hover:text-gray-900'}" data-sort="korean">
+            <button class="modal-sort-toggle-btn px-2 py-0.5 rounded text-[11px] font-semibold transition ${currentSortMode === 'korean' ? 'bg-blue-600 text-white shadow-xs' : 'text-gray-500 hover:text-gray-900'}" data-sort="korean">
                 ㄱㄴㄷ순
+            </button>
+            <button class="modal-sort-toggle-btn px-2 py-0.5 rounded text-[11px] font-semibold transition ${currentSortMode === 'korean_desc' ? 'bg-blue-600 text-white shadow-xs' : 'text-gray-500 hover:text-gray-900'}" data-sort="korean_desc">
+                ㄱㄴㄷ 역순
             </button>
         </div>
     `;
@@ -3104,7 +4670,7 @@ const updateChart = () => {
 
 
 // ============================================================================
-// 🎰 도박(금도·다도) 기대수익 및 손익 백분위 곡선 시스템
+// 도박(금도·다도) 기대수익 및 손익 백분위 곡선 시스템
 // ============================================================================
 let currentGachaType = 'gold'; // 'gold' | 'dia'
 let currentGachaMetric = 'profit'; // 'profit' (순수익 억) | 'roi' (수익률 %)
@@ -3113,9 +4679,12 @@ let gachaSpotCache = {};
 let isGachaTableExpanded = false;
 let isGachaMainOpen = false; // 기본값: 닫힘 (장비탭 숨김 & 악세탭에서 버튼 눌러야 열림)
 
-// 1. 악세서리 실시간 적정 시세 조회기 (캐싱 지원)
+// 1. 액세서리 실시간 적정 시세 조회기 (캐싱 지원)
 const getAccSpotPrice = (itemName, targetGrade) => {
     const cacheKey = `${itemName}__${targetGrade}`;
+    if (window.PRECOMPUTED_WEB_STATS && window.PRECOMPUTED_WEB_STATS.accSpotPrices && window.PRECOMPUTED_WEB_STATS.accSpotPrices[cacheKey] !== undefined) {
+        return window.PRECOMPUTED_WEB_STATS.accSpotPrices[cacheKey];
+    }
     if (gachaSpotCache[cacheKey] !== undefined) {
         return gachaSpotCache[cacheKey];
     }
@@ -3459,15 +5028,15 @@ const renderGachaChart = (stats) => {
                             const pt = item.raw;
                             if (item.datasetIndex === 0) {
                                 return [
-                                    `🎯 결과 품목: ${pt.item || ''}`,
-                                    `💰 최신 시세: ${pt.spotPrice ? pt.spotPrice.toLocaleString() + '억' : '-'}`,
-                                    `💵 1회 순수익: ${pt.profit > 0 ? '+' : ''}${pt.profit.toFixed(1)}억`,
-                                    `📈 1회 수익률: ${pt.roi > 0 ? '+' : ''}${pt.roi.toFixed(1)}%`
+                                    `결과 품목: ${pt.item || ''}`,
+                                    `최신 시세: ${pt.spotPrice ? pt.spotPrice.toLocaleString() + '억' : '-'}`,
+                                    `1회 순수익: ${pt.profit > 0 ? '+' : ''}${pt.profit.toFixed(1)}억`,
+                                    `1회 수익률: ${pt.roi > 0 ? '+' : ''}${pt.roi.toFixed(1)}%`
                                 ];
                             } else if (item.datasetIndex === 1) {
-                                return `⚖️ 본전선 (순수익 0억 / 0.0%)`;
+                                return `본전선 (순수익 0억 / 0.0%)`;
                             } else {
-                                return `📊 평균 기대손익: ${evY > 0 ? '+' : ''}${evY.toFixed(1)}${isProfit ? '억' : '%'}`;
+                                return `평균 기대손익: ${evY > 0 ? '+' : ''}${evY.toFixed(1)}${isProfit ? '억' : '%'}`;
                             }
                         }
                     }
@@ -3493,7 +5062,7 @@ const renderGachaEVSection = () => {
         return;
     }
 
-    // 악세서리 탭에서는 컨테이너 표시
+    // 액세서리 탭에서는 컨테이너 표시
     container.classList.remove('hidden');
 
     if (!RAW_LINES || RAW_LINES.length === 0 || !ITEM_INDEX['acc']) {
@@ -3501,42 +5070,14 @@ const renderGachaEVSection = () => {
         return;
     }
 
-    // 2. 닫혀 있는 상태: 버튼을 눌러야 열림
+    // 2. 닫혀 있는 상태: 메인화면 상단에 배치하지 않고 숨김 (왼쪽 더보기 메뉴를 통해 진입)
     if (!isGachaMainOpen) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
         if (gachaChartInstance) {
             try { gachaChartInstance.destroy(); } catch (e) {}
             gachaChartInstance = null;
         }
-
-        container.innerHTML = `
-            <div class="mb-4">
-                <button id="btn-toggle-gacha-main" class="w-full flex items-center justify-between p-3.5 bg-gradient-to-r from-amber-50/80 via-indigo-50/50 to-blue-50/70 hover:from-amber-100/90 hover:to-blue-100/80 rounded-2xl border border-amber-200/80 shadow-sm transition-all group cursor-pointer text-left">
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl group-hover:scale-110 transition-transform">🎰</span>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm font-bold text-gray-900">도박(금도 · 다도) 기대수익 및 손익 백분위 곡선</span>
-                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800">실시간 연동</span>
-                            </div>
-                            <div class="text-[11px] text-gray-500 mt-0.5">
-                                금조각·다조각 99개 도박의 확률별 기대수익, 승률(BEP), 손익 백분위 곡선 분석 보기
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-white/90 px-3.5 py-1.5 rounded-xl border border-blue-200 shadow-2xs group-hover:bg-blue-600 group-hover:text-white transition">
-                        <span>분석 열기</span>
-                        <svg class="w-4 h-4 transform group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </div>
-                </button>
-            </div>
-        `;
-
-        document.getElementById('btn-toggle-gacha-main')?.addEventListener('click', () => {
-            isGachaMainOpen = true;
-            renderGachaEVSection();
-        });
         return;
     }
 
@@ -3550,12 +5091,12 @@ const renderGachaEVSection = () => {
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100">
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="text-xl">🎰</span>
+                        
                         <h2 class="text-base sm:text-lg font-bold text-gray-900">도박(금도 · 다도) 기대수익 및 손익 백분위 곡선</h2>
                         <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700">실시간 연동</span>
                     </div>
                     <p class="text-xs text-gray-500 mt-1">
-                        갈갈 및 악세서리 최신 적정 시세 자동 반영 (1회 비용 = 갈갈 시세 ÷ 18 × 99)
+                        갈갈 및 액세서리 최신 적정 시세 자동 반영 (1회 비용 = 갈갈 시세 ÷ 18 × 99)
                     </p>
                 </div>
 
@@ -3564,10 +5105,10 @@ const renderGachaEVSection = () => {
                     <!-- Gacha Switcher -->
                     <div class="flex bg-gray-100 p-1 rounded-xl">
                         <button id="btn-gacha-gold" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${isGold ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'}">
-                            🪙 금도 (금조각 99)
+                            금도 (금조각 99)
                         </button>
                         <button id="btn-gacha-dia" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${!isGold ? 'bg-cyan-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'}">
-                            💎 다도 (다조각 99)
+                            다도 (다조각 99)
                         </button>
                     </div>
 
@@ -3643,7 +5184,7 @@ const renderGachaEVSection = () => {
             <div class="mt-4 pt-4 border-t border-gray-100">
                 <div class="flex items-center justify-between mb-2">
                     <div class="text-xs font-bold text-gray-700 flex items-center gap-1.5">
-                        <span>📈 결과 좋은 정도(상위 %)에 따른 손익 백분위 곡선</span>
+                        <span>결과 좋은 정도(상위 %)에 따른 손익 백분위 곡선</span>
                     </div>
                     <span class="text-[10px] text-gray-400">마우스 호버/터치 시 상세 정보</span>
                 </div>
@@ -3682,7 +5223,7 @@ const renderGachaEVSection = () => {
                         ${stats.items.map(it => `
                             <tr class="${it.isGalgal ? 'bg-gray-50/70 text-gray-500' : 'hover:bg-blue-50/40 transition'}">
                                 <td class="py-2 px-3 font-medium text-gray-900 flex items-center gap-1.5">
-                                    ${it.isGalgal ? '<span class="text-xs">🗑️</span>' : '<span class="text-xs">✨</span>'}
+                                    
                                     <span>${it.label}</span>
                                 </td>
                                 <td class="py-2 px-2 text-center text-gray-500">
@@ -3737,6 +5278,7 @@ const renderGachaEVSection = () => {
     // Event Listeners
     document.getElementById('btn-close-gacha-main')?.addEventListener('click', () => {
         isGachaMainOpen = false;
+        renderFilters();
         renderGachaEVSection();
     });
 
@@ -3778,5 +5320,496 @@ const renderGachaEVSection = () => {
     renderGachaChart(stats);
 };
 
-document.addEventListener('DOMContentLoaded', init);
 
+// ============================================================================
+// 7. 의상 체력(HP) · 기술(Tech) 상승 비용 및 가성비 비교 분석기 (표 열거 방식)
+// ============================================================================
+let isClothesUpgradeOpen = false; // 기본값: 닫힘 (왼쪽 더보기를 눌러 열기)
+let currentUpgradeStatType = 'hp'; // 'hp' | 'tech'
+let currentUpgradePart = 'all';    // 'all' | '모자' | '상의' | '하의'
+let selectedUpgradeRefRowMap = {}; // key: `${statType}__${part}` -> rowKey (행 클릭 시 지정 장비 기준 비교용)
+
+const getDefaultUpgradeStartConfig = (part, statType) => {
+    if (part === '모자') {
+        return { itemName: '일팬모', enc: 7, optGroup: '무/잡' };
+    }
+    if (part === '상의') {
+        return statType === 'hp'
+            ? { itemName: '체팬상', enc: 7, optGroup: '무/잡' }
+            : { itemName: '기팬상', enc: 7, optGroup: '무/잡' };
+    }
+    return statType === 'hp'
+        ? { itemName: '체팬하', enc: 7, optGroup: '무/잡' }
+        : { itemName: '기팬하', enc: 7, optGroup: '무/잡' };
+};
+
+const getClothesOptionStatBonus = (optGroup, enc, statType) => {
+    if (statType === 'hp') {
+        if (optGroup === '추체') return enc === 10 ? 60 : (enc === 9 ? 30 : 15);
+        if (optGroup === '향추체') return enc === 10 ? 100 : (enc === 9 ? 45 : 20);
+        return 0;
+    } else {
+        if (optGroup === '추기') return enc === 10 ? 20 : (enc === 9 ? 10 : 5);
+        if (optGroup === '향추기') return enc === 10 ? 30 : (enc === 9 ? 15 : 7);
+        return 0;
+    }
+};
+
+const getCombinedMuJapSpotPrice = (processedItem, cellKey) => {
+    if (!processedItem || !processedItem.variants) return { price: 0, count: 0 };
+    if (!processedItem._muJapSpotCache) processedItem._muJapSpotCache = {};
+    if (processedItem._muJapSpotCache[cellKey]) return processedItem._muJapSpotCache[cellKey];
+
+    const getRawMuJapHistory = (targetCellKey) => {
+        const history = [];
+        const seenLineIdx = new Set();
+        ['무', '잡'].forEach(optKey => {
+            const v = (processedItem.allVariantsRaw && processedItem.allVariantsRaw[optKey]) || processedItem.variants[optKey];
+            const cell = v?.rawMatrixAll?.[targetCellKey] || v?.matrix?.[targetCellKey];
+            if (cell && Array.isArray(cell.history)) {
+                cell.history.forEach(h => {
+                    const lineKey = h.rawLineIdx !== undefined ? h.rawLineIdx : `${h.isoDate?.getTime()}_${h.price}`;
+                    if (!seenLineIdx.has(lineKey)) {
+                        seenLineIdx.add(lineKey);
+                        history.push(h);
+                    }
+                });
+            }
+        });
+        history.sort((a, b) => (a.isoDate - b.isoDate) || ((a.rawLineIdx || 0) - (b.rawLineIdx || 0)));
+        return history;
+    };
+
+    const combinedHistory = getRawMuJapHistory(cellKey);
+    if (combinedHistory.length < 3) {
+        const res = { price: 0, count: combinedHistory.length };
+        processedItem._muJapSpotCache[cellKey] = res;
+        return res;
+    }
+
+    const analysis = computeMarketAnalysis(combinedHistory);
+    const spot = analysis ? Number(analysis.spotFair.toFixed(2)) : Number(combinedHistory[combinedHistory.length - 1].price.toFixed(2));
+    const res = { price: spot, count: combinedHistory.length };
+    processedItem._muJapSpotCache[cellKey] = res;
+
+    // 7_7 또는 8_8 시세 계산 시 가격 역전(8강이 7강보다 더 싼 경우) 발생 검사 및 표본 병합
+    if (cellKey === '7_7' || cellKey === '8_8') {
+        const otherKey = cellKey === '7_7' ? '8_8' : '7_7';
+        if (processedItem._muJapSpotCache[otherKey]) {
+            const info7 = cellKey === '7_7' ? res : processedItem._muJapSpotCache['7_7'];
+            const info8 = cellKey === '8_8' ? res : processedItem._muJapSpotCache['8_8'];
+            if (info7.price > 0 && info8.price > 0 && info8.price < info7.price) {
+                const hist7 = getRawMuJapHistory('7_7');
+                const hist8 = getRawMuJapHistory('8_8');
+                const merged = [];
+                const seen = new Set();
+                [...hist7, ...hist8].forEach(h => {
+                    const k = h.rawLineIdx !== undefined ? h.rawLineIdx : `${h.isoDate?.getTime()}_${h.price}`;
+                    if (!seen.has(k)) {
+                        seen.add(k);
+                        merged.push(h);
+                    }
+                });
+                merged.sort((a, b) => (a.isoDate - b.isoDate) || ((a.rawLineIdx || 0) - (b.rawLineIdx || 0)));
+                const mergedAnalysis = computeMarketAnalysis(merged);
+                const mergedSpot = mergedAnalysis ? Number(mergedAnalysis.spotFair.toFixed(2)) : Number(merged[merged.length - 1].price.toFixed(2));
+                const mergedRes = { price: mergedSpot, count: merged.length };
+                processedItem._muJapSpotCache['7_7'] = mergedRes;
+                processedItem._muJapSpotCache['8_8'] = mergedRes;
+                return mergedRes;
+            }
+        }
+    }
+
+    return res;
+};
+
+/**
+ * 사전 계산된 window.PRECOMPUTED_WEB_STATS가 있으면 즉시(0ms) 반환하고,
+ * 없을 때만 런타임에 계산합니다.
+ */
+const computeClothesStepTable = (part, statType) => {
+    if (
+        window.PRECOMPUTED_WEB_STATS &&
+        window.PRECOMPUTED_WEB_STATS.clothesStepTables &&
+        window.PRECOMPUTED_WEB_STATS.clothesStepTables[statType] &&
+        Array.isArray(window.PRECOMPUTED_WEB_STATS.clothesStepTables[statType][part])
+    ) {
+        return window.PRECOMPUTED_WEB_STATS.clothesStepTables[statType][part];
+    }
+
+    const equipIndex = ITEM_INDEX['equip'] || {};
+    const startCfg = getDefaultUpgradeStartConfig(part, statType);
+    const startMeta = getEquipMeta(startCfg.itemName);
+    const startBase = getEquipBaseStats(startCfg.itemName, startMeta);
+    const startStatVal = (startBase ? startBase[statType] : 0) + (ENHANCE_ADD_STATS.clothes[statType][startCfg.enc] || 0);
+
+    const allCandidates = [];
+    const visitedCanonical = new Set();
+
+    Object.keys(equipIndex).forEach(rawItemName => {
+        const meta = getEquipMeta(rawItemName);
+        if (!meta || meta.part !== part) return;
+
+        const partnerKey = getEquipPartnerKey(meta.key);
+        if (meta.isSturdy && meta.key.startsWith('튼') && partnerKey && equipIndex[partnerKey]) {
+            return;
+        }
+        if (visitedCanonical.has(meta.key)) return;
+        visitedCanonical.add(meta.key);
+
+        const base = getEquipBaseStats(meta.key, meta);
+        if (!base || (base.hp === undefined && base.tech === undefined)) return;
+        if ((base[statType] || 0) <= 0) return;
+
+        const processed = processItemOnDemand('equip', meta.key);
+        if (!processed || !processed.variants) return;
+
+        const targetOptGroups = statType === 'hp'
+            ? ['무/잡', '추체', '향추체']
+            : ['무/잡', '추기', '향추기'];
+
+        for (const enc of [7, 8, 9, 10]) {
+            const cellKey = `${enc}_${enc}`;
+            const baseStatVal = base[statType] || 0;
+            const enhStatVal = ENHANCE_ADD_STATS.clothes[statType][enc] || 0;
+
+            for (const optGroup of targetOptGroups) {
+                let spotInfo = null;
+                if (optGroup === '무/잡') {
+                    spotInfo = getCombinedMuJapSpotPrice(processed, cellKey);
+                } else {
+                    const v = processed.variants[optGroup];
+                    spotInfo = v ? getVariantCellSpotPrice(v, cellKey, false) : null;
+                }
+
+                if (!spotInfo || spotInfo.price <= 0 || spotInfo.count < 3) continue;
+
+                const optStatVal = getClothesOptionStatBonus(optGroup, enc, statType);
+                const totalStat = baseStatVal + enhStatVal + optStatVal;
+
+                if (totalStat < startStatVal) continue;
+
+                allCandidates.push({
+                    rowKey: `${meta.key}__${enc}__${optGroup}`,
+                    part,
+                    level: meta.level,
+                    itemName: meta.key,
+                    officialName: meta.officialName,
+                    enc,
+                    nmName: `${enc}/${enc} ${meta.key}`,
+                    optGroup,
+                    baseStatVal,
+                    enhStatVal,
+                    optStatVal,
+                    totalStat,
+                    spotPrice: spotInfo.price,
+                    tradeCount: spotInfo.count
+                });
+            }
+        }
+    });
+
+    if (allCandidates.length === 0) return [];
+
+    const startRowKey = `${startCfg.itemName}__${startCfg.enc}__${startCfg.optGroup}`;
+    let current = allCandidates.find(c => c.rowKey === startRowKey);
+    if (!current) {
+        allCandidates.sort((a, b) => (a.totalStat - b.totalStat) || (a.spotPrice - b.spotPrice));
+        current = allCandidates[0];
+    }
+
+    const selectedRows = [
+        {
+            ...current,
+            isStart: true,
+            prevStatDiff: 0,
+            prevCostDiff: 0,
+            costPerStat: 0
+        }
+    ];
+
+    while (true) {
+        const higherCandidates = allCandidates.filter(c => c.totalStat > current.totalStat);
+        if (higherCandidates.length === 0) break;
+
+        higherCandidates.sort((a, b) => {
+            if (a.totalStat !== b.totalStat) return a.totalStat - b.totalStat;
+            return a.spotPrice - b.spotPrice;
+        });
+
+        const nextItem = higherCandidates[0];
+        const prevStatDiff = nextItem.totalStat - current.totalStat;
+        const prevCostDiff = nextItem.spotPrice - current.spotPrice;
+        const costPerStat = prevStatDiff > 0 ? (prevCostDiff / prevStatDiff) : 0;
+
+        selectedRows.push({
+            ...nextItem,
+            isStart: false,
+            prevStatDiff,
+            prevCostDiff,
+            costPerStat
+        });
+
+        current = nextItem;
+    }
+
+    return selectedRows;
+};
+
+const renderSinglePartTableHtml = (part, statType) => {
+    const statName = statType === 'hp' ? '체력' : '기술';
+    const rows = computeClothesStepTable(part, statType);
+    const startCfg = getDefaultUpgradeStartConfig(part, statType);
+
+    if (rows.length === 0) {
+        return `<div class="p-4 text-center text-xs text-gray-500">${part} 데이터가 없습니다.</div>`;
+    }
+
+    const refMapKey = `${statType}__${part}`;
+    const activeRefKey = selectedUpgradeRefRowMap[refMapKey] || null;
+    const refRow = activeRefKey ? rows.find(r => r.rowKey === activeRefKey) : null;
+    const isRefMode = Boolean(refRow);
+
+    const colHeader6 = isRefMode ? '지정 장비대비 변동' : '전단계 대비 상승';
+    const colHeader7 = isRefMode ? '가격차' : '추가 소요 골드';
+    const colHeader8 = isRefMode ? `${statName}당 소요골드` : `추가 ${statName}당 소요 골드`;
+
+    return `
+        <div class="mb-6 last:mb-0">
+            <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-gray-100/80 rounded-t-xl border border-b-0 border-gray-200">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded bg-indigo-600 text-white text-xs font-extrabold">${part}</span>
+                    <span class="text-xs font-extrabold text-gray-800">${part} ${statName} 단계별 상승 및 소요 골드 표</span>
+                </div>
+                <div class="text-[11px] text-gray-500 font-semibold">
+                    ${isRefMode
+                        ? `<span class="text-indigo-700 font-bold">지정 기준 장비: ${refRow.nmName} (${refRow.optGroup}) — 다시 누르면 원래 화면으로 복귀</span>`
+                        : `행의 빈 공간을 누르면 해당 장비 기준으로 비교합니다 (장비명 클릭 시 상세창)`}
+                </div>
+            </div>
+            <div class="overflow-x-auto border border-gray-200 rounded-b-xl">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200 text-gray-700 font-extrabold">
+                            <th class="py-2.5 px-3 text-center whitespace-nowrap">구분</th>
+                            <th class="py-2.5 px-3 text-center whitespace-nowrap">레벨 제한</th>
+                            <th class="py-2.5 px-3 whitespace-nowrap">장비 종류</th>
+                            <th class="py-2.5 px-3 text-center whitespace-nowrap">옵션</th>
+                            <th class="py-2.5 px-3 text-right whitespace-nowrap">장비 제공 ${statName}</th>
+                            <th class="py-2.5 px-3 text-right whitespace-nowrap">${colHeader6}</th>
+                            <th class="py-2.5 px-3 text-right whitespace-nowrap">${colHeader7}</th>
+                            <th class="py-2.5 px-3 text-right whitespace-nowrap">${colHeader8}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        ${rows.map(r => {
+                            const optBadge = r.optGroup === '무/잡'
+                                ? `<span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-bold">무/잡</span>`
+                                : (r.optGroup.startsWith('향')
+                                    ? `<span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-extrabold">${r.optGroup}</span>`
+                                    : `<span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold">${r.optGroup}</span>`);
+
+                            let statDiffHtml = '';
+                            let goldDiffHtml = '';
+                            let perStatGoldHtml = '';
+                            let trClass = '';
+
+                            if (isRefMode) {
+                                const isThisRef = r.rowKey === refRow.rowKey;
+                                const diffStat = r.totalStat - refRow.totalStat;
+                                const diffPrice = r.spotPrice - refRow.spotPrice;
+                                const perStat = diffStat !== 0 ? (diffPrice / Math.abs(diffStat)) : 0;
+
+                                trClass = isThisRef
+                                    ? 'bg-indigo-100/70 font-semibold ring-1 ring-inset ring-indigo-400'
+                                    : 'hover:bg-gray-50';
+
+                                if (isThisRef) {
+                                    statDiffHtml = `<span class="text-indigo-700 font-bold">기준 (0)</span>`;
+                                    goldDiffHtml = `<span class="text-indigo-700 font-bold">기준 (${r.spotPrice.toFixed(1)}억)</span>`;
+                                    perStatGoldHtml = `<span class="text-gray-400 font-bold">-</span>`;
+                                } else {
+                                    const statDiffColor = diffStat > 0 ? 'text-emerald-600' : (diffStat < 0 ? 'text-rose-600' : 'text-gray-400');
+                                    statDiffHtml = `<span class="${statDiffColor} font-extrabold">${diffStat > 0 ? '+' : ''}${diffStat}</span>`;
+
+                                    const goldDiffColor = diffPrice >= 0 ? 'text-gray-900' : 'text-emerald-600';
+                                    goldDiffHtml = `<span class="font-bold ${goldDiffColor}">${diffPrice >= 0 ? '+' : ''}${diffPrice.toFixed(1)}억</span> <span class="text-[10px] text-gray-400 font-normal">(${r.spotPrice.toFixed(1)}억)</span>`;
+
+                                    const perStatColor = perStat >= 0 ? 'text-rose-600' : 'text-emerald-600';
+                                    perStatGoldHtml = `<span class="font-extrabold ${perStatColor}">${perStat.toFixed(2)}억</span>`;
+                                }
+                            } else {
+                                trClass = r.isStart ? 'bg-indigo-50/60 font-semibold' : 'hover:bg-gray-50';
+
+                                statDiffHtml = r.isStart
+                                    ? `<span class="text-gray-400">-</span>`
+                                    : `<span class="text-emerald-600 font-extrabold">+${r.prevStatDiff}</span>`;
+
+                                goldDiffHtml = r.isStart
+                                    ? `<span class="text-indigo-700 font-bold">기준 (${r.spotPrice.toFixed(1)}억)</span>`
+                                    : `<span class="font-bold ${r.prevCostDiff >= 0 ? 'text-gray-900' : 'text-emerald-600'}">${r.prevCostDiff >= 0 ? '+' : ''}${r.prevCostDiff.toFixed(1)}억</span> <span class="text-[10px] text-gray-400 font-normal">(${r.spotPrice.toFixed(1)}억)</span>`;
+
+                                perStatGoldHtml = r.isStart
+                                    ? `<span class="text-gray-400 font-bold">-</span>`
+                                    : `<span class="font-extrabold ${r.costPerStat >= 0 ? 'text-rose-600' : 'text-emerald-600'}">${r.costPerStat.toFixed(2)}억</span>`;
+                            }
+
+                            return `
+                                <tr data-ref-part="${part}" data-ref-rowkey="${r.rowKey}" class="upg-Selectable-row ${trClass} transition cursor-pointer">
+                                    <td class="py-2 px-3 text-center font-bold text-gray-700 whitespace-nowrap">${r.part}</td>
+                                    <td class="py-2 px-3 text-center font-mono text-gray-600 whitespace-nowrap">${r.level}</td>
+                                    <td class="py-2 px-3 font-extrabold text-gray-900 whitespace-nowrap">
+                                        <button type="button" data-open-equip="${r.itemName}" class="btn-upg-open-modal hover:text-blue-600 hover:underline cursor-pointer text-left">
+                                            ${r.nmName}
+                                        </button>
+                                    </td>
+                                    <td class="py-2 px-3 text-center whitespace-nowrap">${optBadge}</td>
+                                    <td class="py-2 px-3 text-right font-mono font-black text-rose-600 whitespace-nowrap">
+                                        ${r.totalStat}
+                                    </td>
+                                    <td class="py-2 px-3 text-right font-mono whitespace-nowrap">
+                                        ${statDiffHtml}
+                                    </td>
+                                    <td class="py-2 px-3 text-right font-mono whitespace-nowrap">
+                                        ${goldDiffHtml}
+                                    </td>
+                                    <td class="py-2 px-3 text-right font-mono whitespace-nowrap">
+                                        ${perStatGoldHtml}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+};
+
+const renderClothesUpgradeSection = () => {
+    const container = document.getElementById('clothes-upgrade-section');
+    if (!container) return;
+
+    if (currentCategory !== 'equip' || !isClothesUpgradeOpen) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+    }
+
+    if (!RAW_LINES || RAW_LINES.length === 0 || !ITEM_INDEX['equip']) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+    }
+
+    container.classList.remove('hidden');
+
+    const isHp = currentUpgradeStatType === 'hp';
+    const statName = isHp ? '체력' : '기술';
+    const partsToRender = currentUpgradePart === 'all' ? ['모자', '상의', '하의'] : [currentUpgradePart];
+
+    container.innerHTML = `
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 md:p-6 mb-6">
+            <!-- 상단 헤더 & 컨트롤 바 -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-4 border-b border-gray-100 mb-4">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="text-base sm:text-lg font-extrabold text-gray-900">의상 ${statName} 단계별 상승 비용 표</h2>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        장비별 스탯 상승량과 소요 골드를 열거합니다
+                    </p>
+                </div>
+
+                <!-- 스탯 / 부위 / 닫기 컨트롤 -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- 체력 vs 기술 스위치 (동일하게 빨강 계열 활성 스타일 적용) -->
+                    <div class="flex bg-gray-100 p-1 rounded-xl">
+                        <button type="button" id="btn-upg-stat-hp" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${isHp ? 'bg-rose-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}">
+                            체력 상승 표
+                        </button>
+                        <button type="button" id="btn-upg-stat-tech" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${!isHp ? 'bg-rose-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}">
+                            기술 상승 표
+                        </button>
+                    </div>
+
+                    <!-- 부위 스위치 (전체 / 모자 / 상의 / 하의) -->
+                    <div class="flex bg-gray-100 p-1 rounded-xl">
+                        ${[
+                            { k: 'all', l: '전체 부위' },
+                            { k: '모자', l: '모자' },
+                            { k: '상의', l: '상의' },
+                            { k: '하의', l: '하의' }
+                        ].map(p => `
+                            <button type="button" data-upg-part="${p.k}" class="btn-upg-part px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${currentUpgradePart === p.k ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}">
+                                ${p.l}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <!-- 닫기 버튼 -->
+                    <button type="button" id="btn-close-clothes-upgrade" class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition cursor-pointer">
+                        <span>닫기</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 부위별 단계 표 렌더링 -->
+            <div>
+                ${partsToRender.map(part => renderSinglePartTableHtml(part, currentUpgradeStatType)).join('')}
+            </div>
+        </div>
+    `;
+
+    // 이벤트 바인딩
+    document.getElementById('btn-close-clothes-upgrade')?.addEventListener('click', () => {
+        isClothesUpgradeOpen = false;
+        renderFilters();
+        renderClothesUpgradeSection();
+    });
+
+    document.getElementById('btn-upg-stat-hp')?.addEventListener('click', () => {
+        currentUpgradeStatType = 'hp';
+        renderClothesUpgradeSection();
+    });
+
+    document.getElementById('btn-upg-stat-tech')?.addEventListener('click', () => {
+        currentUpgradeStatType = 'tech';
+        renderClothesUpgradeSection();
+    });
+
+    container.querySelectorAll('.btn-upg-part').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentUpgradePart = btn.dataset.upgPart;
+            renderClothesUpgradeSection();
+        });
+    });
+
+    // 장비명 클릭 시 장비 상세 모달 열기 (행 클릭 이벤트로 전파 차단)
+    container.querySelectorAll('.btn-upg-open-modal').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const itemName = btn.dataset.openEquip;
+            const processed = processItemOnDemand('equip', itemName);
+            if (processed) openModal(processed);
+        });
+    });
+
+    // 표의 행 공간 클릭 시 지정 장비 대비 모드로 전환 / 다시 누르면 원래 화면으로 복귀
+    container.querySelectorAll('.upg-Selectable-row').forEach(tr => {
+        tr.addEventListener('click', () => {
+            const part = tr.dataset.refPart;
+            const clickedKey = tr.dataset.refRowkey;
+            const mapKey = `${currentUpgradeStatType}__${part}`;
+            if (selectedUpgradeRefRowMap[mapKey] === clickedKey) {
+                delete selectedUpgradeRefRowMap[mapKey];
+            } else {
+                selectedUpgradeRefRowMap[mapKey] = clickedKey;
+            }
+            renderClothesUpgradeSection();
+        });
+    });
+};
+
+document.addEventListener('DOMContentLoaded', init);

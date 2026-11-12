@@ -43,18 +43,15 @@
                     <button class="filter-btn active w-1/2 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
                         data-category="equip">장비</button>
                     <button class="filter-btn w-1/2 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
-                        data-category="acc">악세서리</button>
+                        data-category="acc">액세서리</button>
                 </div>
             </div>
 
             <!-- Sort Order Filter (Sidebar) -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">정렬 방식</label>
-                <div class="flex space-x-2">
-                    <button class="sidebar-sort-btn active w-1/2 py-2 rounded-lg bg-blue-600 text-white font-medium text-xs transition shadow-sm"
-                        data-sort="freq">🔥 빈도순</button>
-                    <button class="sidebar-sort-btn w-1/2 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium text-xs transition"
-                        data-sort="korean">🔤 ㄱㄴㄷ순</button>
+                <div id="sidebar-sort-group" class="grid grid-cols-2 gap-1.5">
+                    <!-- Dynamic Sort Buttons Injected by JS -->
                 </div>
             </div>
 
@@ -101,18 +98,13 @@
                     </button>
                     <!-- Dropdown Panel -->
                     <div id="sort-dropdown-menu"
-                        class="hidden absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50">
+                        class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50">
                         <div class="px-3 py-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
                             정렬 방식 선택
                         </div>
-                        <button class="sort-select-option w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-blue-50 flex items-center justify-between transition text-blue-600 bg-blue-50/50" data-sort="freq">
-                            <span class="flex items-center gap-1.5">🔥 빈도순 (거래량순)</span>
-                            <span class="sort-check text-blue-600 font-bold" id="check-freq">✓</span>
-                        </button>
-                        <button class="sort-select-option w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-blue-50 flex items-center justify-between transition text-gray-700" data-sort="korean">
-                            <span class="flex items-center gap-1.5">🔤 ㄱㄴㄷ순 (이름순)</span>
-                            <span class="sort-check text-blue-600 font-bold hidden" id="check-korean">✓</span>
-                        </button>
+                        <div id="sort-dropdown-options" class="divide-y divide-gray-50">
+                            <!-- Injected by JS -->
+                        </div>
                     </div>
                 </div>
 
@@ -124,6 +116,9 @@
 
         <!-- Item Grid -->
         <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            <!-- Clothes Stat Upgrade Cost & Efficiency Analyzer (의상 체력/기술 상승 비용 및 가성비 분석기) -->
+            <div id="clothes-upgrade-section" class="mb-6 hidden"></div>
+
             <!-- Gacha EV Calculator Banner (금도 & 다도 실시간 기대수익) -->
             <div id="gacha-ev-section" class="mb-6 hidden"></div>
 
@@ -208,7 +203,8 @@
     </div>
 
     <script src="data.js" onerror=""></script>
-    <script src="app.js?v=20261029_13"></script>
+    <script src="precomputed_stats.js?v=20261112_1"></script>
+    <script src="app.js?v=20261112_2"></script>
 </body>
 
 </html>
