@@ -19,7 +19,7 @@ const FIXED_STONE_396_EOK = 1.2;  // 강화석 396개당 1.2억 고정
 let currentCategory = 'equip';
 let currentPartFilter = 'all'; // 'all' | '괭이' | '낫' | '물뿌' | '거삽' | '모삽' | '모자' | '상의' | '하의'
 let currentTagFilter = 'all';
-let currentAccTagFilter = 'all'; // 'all' | '에코' | '바람' | '활력' | '신속' | '재료' | '발굴' | '하레' | '특수' | '듀얼' | '갈갈'
+let currentAccTagFilter = 'all'; // 'all' | '에코' | '바람' | '활력' | '신속' | '재료' | '발굴' | '일퀘' | '특수' | '듀얼' | '갈갈'
 let currentChartRange = 'all';
 let currentYScale = 'normal';
 let currentChartMode = 'curve'; // 'curve' (시세곡선) | 'compare' (원본비교)
@@ -1964,8 +1964,8 @@ const ACC_META_DB = {
     // --- 6. 하루 경험의 액세서리 (다 200%, 금 100%, 은 50%, 배경 분홍색) ---
     '하경': {
         officialName: '하루 경험의 액세서리',
-        group: '하레',
-        tags: ['하레'],
+        group: '일퀘',
+        tags: ['일퀘'],
         box: '쥬얼리박 (77레알)',
         colorBadge: 'bg-pink-100 text-pink-800 border-pink-200',
         target: '일일 퀘스트 성공',
@@ -1978,8 +1978,8 @@ const ACC_META_DB = {
     // --- 7. 하루 레알의 액세서리 (다 3개, 금 2개, 은 1개, 배경 초록색) ---
     '하레': {
         officialName: '하루 레알의 액세서리',
-        group: '하레',
-        tags: ['하레'],
+        group: '일퀘',
+        tags: ['일퀘'],
         box: '쥬얼리박 (77레알)',
         colorBadge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
         target: '일일 퀘스트 성공',
@@ -2895,7 +2895,7 @@ const ACC_TAG_FILTER_OPTIONS = [
     { key: '신속', label: '신속', activeCls: 'bg-cyan-600 text-white border-cyan-600 shadow-xs' },
     { key: '재료', label: '재료', activeCls: 'bg-amber-500 text-white border-amber-500 shadow-xs' },
     { key: '발굴', label: '발굴', activeCls: 'bg-orange-600 text-white border-orange-600 shadow-xs' },
-    { key: '하레', label: '하레', activeCls: 'bg-teal-600 text-white border-teal-600 shadow-xs' },
+    { key: '일퀘', label: '일퀘', activeCls: 'bg-teal-600 text-white border-teal-600 shadow-xs' },
     { key: '특수', label: '특수', activeCls: 'bg-purple-600 text-white border-purple-600 shadow-xs' },
     { key: '듀얼', label: '듀얼', activeCls: 'bg-violet-600 text-white border-violet-600 shadow-xs' },
     { key: '갈갈', label: '갈갈', activeCls: 'bg-gray-700 text-white border-gray-700 shadow-xs' }
@@ -2915,7 +2915,7 @@ const renderAccBadgesHtml = (accMeta) => {
         else if (tag === '신속') cls = 'bg-cyan-50 text-cyan-700 border-cyan-200';
         else if (tag === '재료') cls = 'bg-amber-50 text-amber-700 border-amber-200';
         else if (tag === '발굴') cls = 'bg-orange-50 text-orange-700 border-orange-200';
-        else if (tag === '하레') cls = 'bg-teal-50 text-teal-700 border-teal-200';
+        else if (tag === '일퀘') cls = 'bg-teal-50 text-teal-700 border-teal-200';
         else if (tag === '특수') cls = 'bg-purple-50 text-purple-700 border-purple-200';
         else if (tag === '듀얼') cls = 'bg-violet-50 text-violet-700 border-violet-200';
         else if (tag === '갈갈') cls = 'bg-gray-100 text-gray-700 border-gray-300';
@@ -3352,9 +3352,30 @@ const renderModalHeaderDetails = (item, selectedVariant = null) => {
         const groupName = accMeta?.group || '액세서리';
         const badgesHtml = renderAccBadgesHtml(accMeta);
 
-        elements.modalEquipBadges.innerHTML = badgesHtml;
+        const isDrawerOpen = !elements.equipDetailDrawer.classList.contains('hidden');
 
-        elements.equipDetailDrawer.classList.remove('hidden');
+        elements.modalEquipBadges.innerHTML = `
+            <span class="text-xs text-gray-600 font-medium">${officialName}</span>
+            ${badgesHtml}
+            <button type="button" id="modal-detail-drawer-toggle" class="ml-auto px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold shadow-2xs transition flex items-center gap-1 shrink-0">
+                <span id="modal-detail-drawer-label">${isDrawerOpen ? '액세서리 세부정보 닫기' : '액세서리 세부정보 열기'}</span>
+                <span id="modal-detail-drawer-arrow">${isDrawerOpen ? '▴' : '▾'}</span>
+            </button>
+        `;
+
+        const toggleBtn = document.getElementById('modal-detail-drawer-toggle');
+        elements.equipDetailDrawer.classList.add('rounded-xl', 'bg-blue-50/70', 'border', 'border-blue-200', 'p-3.5', 'text-xs', 'text-gray-700', 'shadow-inner', 'space-y-2');
+        const labelSpan = document.getElementById('modal-detail-drawer-label');
+        const arrow = document.getElementById('modal-detail-drawer-arrow');
+        if (toggleBtn) {
+            toggleBtn.onclick = (e) => {
+                e.stopPropagation();
+                const isHidden = elements.equipDetailDrawer.classList.contains('hidden');
+                elements.equipDetailDrawer.classList.toggle('hidden', !isHidden);
+                if (labelSpan) labelSpan.textContent = isHidden ? '액세서리 세부정보 닫기' : '액세서리 세부정보 열기';
+                if (arrow) arrow.textContent = isHidden ? '▴' : '▾';
+            };
+        }
         elements.equipDetailDrawer.innerHTML = `
             <div class="flex items-center justify-between pb-1.5 border-b border-gray-100">
                 <span class="font-bold text-gray-800 text-xs">액세서리 세부정보</span>
@@ -3393,6 +3414,7 @@ const renderModalHeaderDetails = (item, selectedVariant = null) => {
         return;
     }
 
+    elements.equipDetailDrawer.classList.remove('rounded-xl', 'bg-blue-50/70', 'border', 'border-blue-200', 'p-3.5', 'text-xs', 'text-gray-700', 'shadow-inner', 'space-y-2');
     if (item.category !== 'equip' || !item.equipMeta) {
         elements.modalEquipBadges.innerHTML = '';
         elements.equipDetailDrawer.classList.add('hidden');
